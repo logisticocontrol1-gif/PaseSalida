@@ -532,7 +532,6 @@
           <option value="AUXILIAR DE CONTROL LOGÍSTICO">AUXILIAR DE CONTROL LOGÍSTICO</option>
           <option value="AUXILIAR DE SOPORTE DE REGISTROS">AUXILIAR DE SOPORTE DE REGISTROS</option>
           <option value="ASISTENTE DE CONTROL LOGÍSTICO">ASISTENTE DE CONTROL LOGÍSTICO</option>
-          <option value="PILOTO DE VEHÍCULO">PILOTO DE VEHÍCULO</option>
         </select>
         <select class="firma-input" id="despacha-nombre" style="display:none; margin-top:6px;">
           <option value="">— Seleccionar nombre —</option>
@@ -544,13 +543,11 @@
         <div class="section-label">Piloto</div>
         <select class="firma-input" id="piloto-tipo" onchange="onPilotoTipoChange()">
           <option value="">— Tipo de piloto —</option>
-          <option value="interno">PILOTO INTERNO</option>
-          <option value="externo">PILOTO EXTERNO</option>
+          <option value="interno">Piloto Interno</option>
+          <option value="externo">Piloto Externo</option>
         </select>
         <select class="firma-input" id="piloto-nombre" style="display:none; margin-top:6px;">
           <option value="">— Seleccionar nombre —</option>
-          <option>Walter Mateo</option>
-          <option>Edwin Amaya</option>
           <option>Luis Cerón</option>
         </select>
         <input class="firma-input" type="text" id="piloto-nombre-externo" placeholder="Nombre del piloto externo" style="display:none; margin-top:6px;">
@@ -757,10 +754,9 @@
 
   // ── CARGO / NOMBRE DESPACHA
   const nombresPorCargo = {
-    'AUXILIAR DE CONTROL LOGÍSTICO':    ['Marlin Ramírez','Lester Pérez','Anderson Castañeda'],
-    'AUXILIAR DE SOPORTE DE REGISTROS': ['Gustavo Duarte','Leidi Chun'],
-    'ASISTENTE DE CONTROL LOGÍSTICO':   ['Everth Leal','Licda. Roxana Villeda'],
-    'PILOTO DE VEHÍCULO':               ['Walter Mateo'],
+    'AUXILIAR DE CONTROL LOGÍSTICO':    ['Misael Gomez','Lester Pérez','Marlin Ramírez','Anderson Castañeda','Lourdes Borja','Manuel Arias','Christofer Garcia','Jhoel Guzman'],
+    'AUXILIAR DE SOPORTE DE REGISTROS': ['Leydi Chun','Gustavo Duarte','Keita Ruano'],
+    'ASISTENTE DE CONTROL LOGÍSTICO':   ['Everth Leal','Lcda. Roxana Villeda'],
   };
 
   function onCargoChange() {
