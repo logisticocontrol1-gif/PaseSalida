@@ -96,6 +96,25 @@
   .meta-field input:focus { outline: none; border-color: #111; }
   .sep { color: #AAAAAA; font-size: 16px; }
 
+  .tipo-toggle { display: flex; gap: 4px; }
+  .tipo-btn {
+    border: 1.5px solid #AAAAAA;
+    background: #FFFFFF;
+    border-radius: 4px;
+    padding: 4px 9px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+    color: #555;
+    cursor: pointer;
+    text-transform: uppercase;
+  }
+  .tipo-btn.active {
+    background: #111;
+    border-color: #111;
+    color: #FFFFFF;
+  }
+
   /* BODY */
   .body { padding: 18px 20px; }
 
@@ -407,6 +426,14 @@
       <label>No.:</label>
       <input type="text" id="numero" placeholder="001-2026" style="min-width:90px;">
     </div>
+    <span class="sep">|</span>
+    <div class="meta-field">
+      <label>Correlativo:</label>
+      <div class="tipo-toggle" id="tipo-numero-toggle">
+        <button type="button" class="tipo-btn active" data-modo="estrahu" onclick="onTipoNumeroChange('estrahu')">ESTRAHÚ</button>
+        <button type="button" class="tipo-btn" data-modo="tolvas" onclick="onTipoNumeroChange('tolvas')">TOLVAS Y ALMEJAS</button>
+      </div>
+    </div>
   </div>
 
   <!-- BODY -->
@@ -571,27 +598,40 @@
   const anoActual = hoy.getFullYear();
 
   // ── CORRELATIVO CLOUD (auto al cargar)
+  let modoNumero = 'estrahu'; // 'estrahu' (predeterminado) o 'tolvas'
+
   function cargarNumero() {
     const campo = document.getElementById('numero');
+    const bodegaKey = modoNumero === 'tolvas' ? ('T' + anoActual) : String(anoActual);
     campo.readOnly = true;
     campo.value = 'Generando…';
-    apiGet({ action: 'siguienteNumero', bodega: String(anoActual) }).then(data => {
-      if (data && data.numero) {
-        campo.value = data.numero;
+    apiGet({ action: 'siguienteNumero', bodega: bodegaKey }).then(data => {
+      if (data && typeof data.secuencia !== 'undefined') {
+        const numStr = String(data.secuencia).padStart(3, '0');
+        campo.value = modoNumero === 'tolvas' ? `T-${numStr}-${anoActual}` : `${numStr}-${anoActual}`;
       } else {
         campo.readOnly = false;
         campo.value = '';
-        campo.placeholder = '001-' + anoActual;
+        campo.placeholder = modoNumero === 'tolvas' ? ('T-001-' + anoActual) : ('001-' + anoActual);
         mostrarToast('⚠️ Sin conexión, escribe el número manualmente');
       }
     }).catch(() => {
       campo.readOnly = false;
       campo.value = '';
-      campo.placeholder = '001-' + anoActual;
+      campo.placeholder = modoNumero === 'tolvas' ? ('T-001-' + anoActual) : ('001-' + anoActual);
       mostrarToast('⚠️ Sin conexión, escribe el número manualmente');
     });
   }
   cargarNumero();
+
+  // ── TOGGLE CORRELATIVO (ESTRAHÚ / TOLVAS Y ALMEJAS)
+  function onTipoNumeroChange(modo) {
+    modoNumero = modo;
+    document.querySelectorAll('#tipo-numero-toggle .tipo-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.modo === modo);
+    });
+    cargarNumero();
+  }
 
   // ── TABLA
   let filas = 0;
@@ -658,7 +698,7 @@
     document.getElementById('piloto-nombre-externo').style.display = 'none';
     document.getElementById('piloto-placa-wrap').innerHTML = '';
     document.getElementById('piloto-placa-wrap').style.display = 'none';
-    cargarNumero();
+    onTipoNumeroChange('estrahu');
   }
 
   // ── TOAST
@@ -988,9 +1028,10 @@
     doc.text('ESTRAHÚ – Documento de control interno', 14, footY);
     doc.text(`Pase No. ${numero}`, W-14, footY, { align:'right' });
 
+    const bodegaLabel = modoNumero === 'tolvas' ? 'Tolvas y Almejas' : 'ESTRAHÚ';
     apiPost({
       action: 'guardarPase',
-      numero, bodega: String(anoActual), destino, fecha, lugar,
+      numero, bodega: bodegaLabel, destino, fecha, lugar,
       despachaCargo: despacha_c, despachaNombre: despacha_n,
       pilotoTipo, pilotoNombre: piloto_n, placa,
       items, generadoPor: despacha_n || piloto_n || ''
