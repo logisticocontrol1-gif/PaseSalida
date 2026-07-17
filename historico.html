@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Histórico de Pases de Salida</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #EEEEEE;
+    color: #111;
+    min-height: 100vh;
+    padding: 24px;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; }
+  h1 {
+    text-align: center;
+    font-size: 18px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  p.sub {
+    text-align: center;
+    color: #666;
+    font-size: 13px;
+    margin-bottom: 24px;
+  }
+  a.volver {
+    display: inline-block;
+    margin-bottom: 16px;
+    font-size: 12px;
+    color: #555;
+    text-decoration: none;
+    border: 1.5px solid #BBBBBB;
+    border-radius: 6px;
+    padding: 6px 12px;
+    background: #FFFFFF;
+  }
+  a.volver:hover { border-color: #888; }
+
+  #gate {
+    position: fixed; inset: 0; background: rgba(20,20,20,0.85);
+    display: flex; align-items: center; justify-content: center; z-index: 999;
+  }
+  .gate-box {
+    background: #FFFFFF; border-radius: 10px; padding: 32px 28px;
+    width: 100%; max-width: 320px; text-align: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  }
+  .gate-box h2 { font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+  .gate-box p { font-size: 12px; color: #777; margin-bottom: 16px; }
+  .gate-box input {
+    width: 100%; padding: 10px 12px; font-size: 14px;
+    border: 1.5px solid #AAAAAA; border-radius: 6px; margin-bottom: 12px; text-align: center;
+  }
+  .gate-box button {
+    width: 100%; padding: 10px; font-size: 13px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.5px; background: #111; color: #FFF; border: none; border-radius: 6px; cursor: pointer;
+  }
+  .gate-box button:hover { background: #333; }
+  .gate-err { color: #C0392B; font-size: 12px; margin-top: 8px; min-height: 16px; }
+
+  #contenido { display: none; }
+
+  .tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .tab-btn {
+    border: 1.5px solid #AAAAAA; background: #FFFFFF; border-radius: 6px;
+    padding: 8px 18px; font-size: 12px; font-weight: 800; letter-spacing: 0.5px;
+    text-transform: uppercase; color: #555; cursor: pointer;
+  }
+  .tab-btn.active { background: #111; border-color: #111; color: #FFF; }
+
+  .toolbar {
+    display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 14px;
+  }
+  .toolbar input[type="text"] {
+    flex: 1; min-width: 180px; padding: 8px 12px; font-size: 13px;
+    border: 1.5px solid #AAAAAA; border-radius: 6px; background: #FFF;
+  }
+  .btn {
+    border: 1.5px solid #111; background: #111; color: #FFF; border-radius: 6px;
+    padding: 8px 14px; font-size: 12px; font-weight: 700; letter-spacing: 0.3px;
+    cursor: pointer; white-space: nowrap;
+  }
+  .btn.secondary { background: #FFF; color: #111; }
+  .btn:hover { opacity: 0.85; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .table-wrap {
+    background: #FFFFFF; border: 1.5px solid #BBBBBB; border-radius: 10px;
+    overflow: auto; max-height: 60vh;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  thead th {
+    position: sticky; top: 0; background: #F4F4F4; text-align: left;
+    padding: 10px 12px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.4px;
+    color: #666; border-bottom: 1.5px solid #DDD; white-space: nowrap;
+  }
+  tbody td {
+    padding: 9px 12px; border-bottom: 1px solid #EEE; white-space: nowrap; color: #222;
+  }
+  tbody tr:hover { background: #FAFAFA; }
+  .empty-msg, .loading-msg {
+    text-align: center; padding: 40px 10px; color: #999; font-size: 13px;
+  }
+  .count-badge {
+    font-size: 11px; color: #777; margin-bottom: 10px;
+  }
+  footer {
+    text-align: center; margin-top: 24px; font-size: 11px; color: #AAAAAA;
+  }
+</style>
+</head>
+<body>
+
+  <div id="gate">
+    <div class="gate-box">
+      <h2>Acceso restringido</h2>
+      <p>Solo asistentes de logística. Ingresa el código de acceso.</p>
+      <input type="password" id="gate-code" placeholder="Código de acceso" autocomplete="off">
+      <button onclick="verificarCodigo()">Entrar</button>
+      <div class="gate-err" id="gate-err"></div>
+    </div>
+  </div>
+
+  <div id="contenido">
+    <div class="wrap">
+      <a class="volver" href="index.html">&larr; Volver al inicio</a>
+      <h1>Histórico de Pases de Salida</h1>
+      <p class="sub">Consulta, filtra y exporta los pases registrados por empresa</p>
+
+      <div class="tabs">
+        <button class="tab-btn active" data-empresa="ALOPSA" onclick="cambiarEmpresa('ALOPSA')">ALOPSA</button>
+        <button class="tab-btn" data-empresa="PAHAME" onclick="cambiarEmpresa('PAHAME')">Pahame</button>
+        <button class="tab-btn" data-empresa="ESTRAHU" onclick="cambiarEmpresa('ESTRAHU')">Estrahú</button>
+      </div>
+
+      <div class="toolbar">
+        <input type="text" id="buscador" placeholder="Buscar por número, destino, despacha o piloto..." oninput="renderTabla()">
+        <button class="btn secondary" onclick="cargarPases()">&#8635; Actualizar</button>
+        <button class="btn secondary" id="btn-pdf" onclick="descargarPDF()">Descargar PDF</button>
+        <button class="btn" id="btn-excel" onclick="descargarExcel()">Descargar Excel</button>
+      </div>
+
+      <div class="count-badge" id="count-badge"></div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>No.</th>
+              <th>Bodega</th>
+              <th>Destino</th>
+              <th>Fecha</th>
+              <th>Lugar</th>
+              <th>Despacha</th>
+              <th>Piloto</th>
+              <th>Placa</th>
+              <th>Artículos</th>
+              <th>Generado por</th>
+              <th>Registrado</th>
+            </tr>
+          </thead>
+          <tbody id="tabla-body"></tbody>
+        </table>
+      </div>
+
+      <footer>Sistema de control de pases de salida &mdash; Histórico</footer>
+    </div>
+  </div>
+
+<script>
+  const CODIGO_ACCESO = 'ASISTENTES2026';
+
+  function verificarCodigo() {
+    const val = document.getElementById('gate-code').value.trim();
+    if (val === CODIGO_ACCESO) {
+      sessionStorage.setItem('historico_ok', '1');
+      document.getElementById('gate').style.display = 'none';
+      document.getElementById('contenido').style.display = 'block';
+      cargarPases();
+    } else {
+      document.getElementById('gate-err').textContent = 'Código incorrecto.';
+    }
+  }
+  document.getElementById('gate-code').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') verificarCodigo();
+  });
+  if (sessionStorage.getItem('historico_ok') === '1') {
+    document.getElementById('gate').style.display = 'none';
+    document.getElementById('contenido').style.display = 'block';
+  }
+
+  const APIS = {
+    ALOPSA: 'https://script.google.com/macros/s/AKfycbxZUxbrNsiOiku48FfGigj0fNnYQJLQPphU0ije_e4JM3LEMzyqbG66z_H2L1GAGbdN/exec',
+    PAHAME: 'https://script.google.com/macros/s/AKfycbzKklWfuBXRkqgVwxL8nNgWm3m8lTN1ZLeOhqK4RgT41stMeqhv9ZLNSe_nlB_dzS6D9w/exec',
+    ESTRAHU: 'https://script.google.com/macros/s/AKfycbwKhlhx0ysOsb59-_UR0t9VLN__Jdh-CmlokauhJFpgvF3XoysjtoRBOwtxgK_EPAi-/exec'
+  };
+  const NOMBRES_EMPRESA = { ALOPSA: 'ALOPSA', PAHAME: 'Pahame', ESTRAHU: 'Estrahú' };
+
+  let empresaActual = 'ALOPSA';
+  let pasesActuales = [];
+
+  function cambiarEmpresa(emp) {
+    empresaActual = emp;
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.empresa === emp);
+    });
+    cargarPases();
+  }
+
+  function contarItems(itemsStr) {
+    try {
+      const arr = JSON.parse(itemsStr || '[]');
+      return Array.isArray(arr) ? arr.length : 0;
+    } catch (e) { return 0; }
+  }
+
+  async function cargarPases() {
+    const tbody = document.getElementById('tabla-body');
+    tbody.innerHTML = '<tr><td colspan="11" class="loading-msg">Cargando…</td></tr>';
+    try {
+      const res = await fetch(`${APIS[empresaActual]}?action=listarPases`);
+      const data = await res.json();
+      pasesActuales = (data && data.pases) || [];
+      pasesActuales.sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''));
+      renderTabla();
+    } catch (e) {
+      tbody.innerHTML = '<tr><td colspan="11" class="empty-msg">⚠️ No se pudo conectar con ' + NOMBRES_EMPRESA[empresaActual] + '.</td></tr>';
+      document.getElementById('count-badge').textContent = '';
+    }
+  }
+
+  function filasFiltradas() {
+    const q = document.getElementById('buscador').value.trim().toLowerCase();
+    if (!q) return pasesActuales;
+    return pasesActuales.filter(p =>
+      String(p.numero || '').toLowerCase().includes(q) ||
+      String(p.destino || '').toLowerCase().includes(q) ||
+      String(p.despachaNombre || '').toLowerCase().includes(q) ||
+      String(p.pilotoNombre || '').toLowerCase().includes(q) ||
+      String(p.placa || '').toLowerCase().includes(q)
+    );
+  }
+
+  function renderTabla() {
+    const tbody = document.getElementById('tabla-body');
+    const filas = filasFiltradas();
+    document.getElementById('count-badge').textContent =
+      `${filas.length} pase${filas.length === 1 ? '' : 's'} de ${NOMBRES_EMPRESA[empresaActual]}`;
+    if (filas.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="11" class="empty-msg">No hay pases registrados.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = filas.map(p => `
+      <tr>
+        <td>${p.numero || ''}</td>
+        <td>${p.bodega || ''}</td>
+        <td>${p.destino || ''}</td>
+        <td>${p.fecha || ''}</td>
+        <td>${p.lugar || ''}</td>
+        <td>${(p.despachaNombre || '') + (p.despachaCargo ? ' — ' + p.despachaCargo : '')}</td>
+        <td>${(p.pilotoNombre || '') + (p.pilotoTipo ? ' — ' + p.pilotoTipo : '')}</td>
+        <td>${p.placa || ''}</td>
+        <td>${contarItems(p.items)}</td>
+        <td>${p.generadoPor || ''}</td>
+        <td>${p.timestamp || ''}</td>
+      </tr>
+    `).join('');
+  }
+
+  function descargarPDF() {
+    const filas = filasFiltradas();
+    if (filas.length === 0) { alert('No hay datos para exportar.'); return; }
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'letter' });
+    doc.setFontSize(12);
+    doc.text(`Histórico de Pases de Salida — ${NOMBRES_EMPRESA[empresaActual]}`, 14, 14);
+    doc.setFontSize(9);
+    doc.setTextColor(120);
+    doc.text(`Generado: ${new Date().toLocaleString('es-GT')}`, 14, 20);
+
+    doc.autoTable({
+      startY: 26,
+      styles: { fontSize: 7, cellPadding: 2 },
+      headStyles: { fillColor: [17, 17, 17] },
+      head: [['No.', 'Bodega', 'Destino', 'Fecha', 'Lugar', 'Despacha', 'Piloto', 'Placa', 'Art.', 'Generado por', 'Registrado']],
+      body: filas.map(p => [
+        p.numero || '', p.bodega || '', p.destino || '', p.fecha || '', p.lugar || '',
+        (p.despachaNombre || '') + (p.despachaCargo ? ' - ' + p.despachaCargo : ''),
+        (p.pilotoNombre || '') + (p.pilotoTipo ? ' - ' + p.pilotoTipo : ''),
+        p.placa || '', String(contarItems(p.items)), p.generadoPor || '', p.timestamp || ''
+      ])
+    });
+
+    doc.save(`Historico_${empresaActual}_${new Date().toISOString().slice(0,10)}.pdf`);
+  }
+
+  function descargarExcel() {
+    const filas = filasFiltradas();
+    if (filas.length === 0) { alert('No hay datos para exportar.'); return; }
+    const rows = filas.map(p => ({
+      'No.': p.numero || '',
+      'Bodega': p.bodega || '',
+      'Destino': p.destino || '',
+      'Fecha': p.fecha || '',
+      'Lugar': p.lugar || '',
+      'Despacha - Cargo': p.despachaCargo || '',
+      'Despacha - Nombre': p.despachaNombre || '',
+      'Piloto - Tipo': p.pilotoTipo || '',
+      'Piloto - Nombre': p.pilotoNombre || '',
+      'Placa': p.placa || '',
+      'Artículos': contarItems(p.items),
+      'Generado por': p.generadoPor || '',
+      'Registrado': p.timestamp || ''
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Historico');
+    XLSX.writeFile(wb, `Historico_${empresaActual}_${new Date().toISOString().slice(0,10)}.xlsx`);
+  }
+</script>
+</body>
+</html>
