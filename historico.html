@@ -283,6 +283,7 @@
   if (sessionStorage.getItem('historico_ok') === '1') {
     document.getElementById('gate').style.display = 'none';
     document.getElementById('contenido').style.display = 'block';
+    cargarPases();
   }
 
   const APIS = {
