@@ -828,6 +828,12 @@
         selPlaca.innerHTML = '<option value="">— Seleccionar placa —</option>';
         addOtroOption();
       });
+    } else if (tipo === 'externo') {
+      placaWrap.style.display = 'block';
+      const placaInp = document.createElement('input');
+      placaInp.type = 'text'; placaInp.id = 'piloto-placa'; placaInp.className = 'firma-input';
+      placaInp.placeholder = 'Placa del vehículo';
+      placaWrap.appendChild(placaInp);
     } else {
       placaWrap.style.display = 'none';
     }

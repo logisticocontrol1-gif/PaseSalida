@@ -326,7 +326,12 @@
       inp.type = 'text'; inp.id = 'piloto-nombre'; inp.className = 'firma-input';
       inp.placeholder = 'Nombre del piloto externo';
       wrap.appendChild(inp);
-      placaWrap.style.display = 'none';
+
+      placaWrap.style.display = 'block';
+      const placaInp = document.createElement('input');
+      placaInp.type = 'text'; placaInp.id = 'piloto-placa'; placaInp.className = 'firma-input';
+      placaInp.placeholder = 'Placa del vehículo';
+      placaWrap.appendChild(placaInp);
     } else {
       wrap.style.display = 'none';
       placaWrap.style.display = 'none';
