@@ -6,7 +6,6 @@
 <title>Histórico de Pases de Salida</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -76,7 +75,7 @@
   .tab-btn.active { background: #111; border-color: #111; color: #FFF; }
 
   .toolbar {
-    display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 14px;
+    display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 10px;
   }
   .toolbar input[type="text"] {
     flex: 1; min-width: 180px; padding: 8px 12px; font-size: 13px;
@@ -91,6 +90,24 @@
   .btn:hover { opacity: 0.85; }
   .btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
+  .filtros {
+    display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 14px;
+    background: #FFFFFF; border: 1.5px solid #BBBBBB; border-radius: 8px; padding: 12px 14px;
+  }
+  .filtro-campo { display: flex; flex-direction: column; gap: 4px; }
+  .filtro-campo label {
+    font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: #888;
+  }
+  .filtro-campo input[type="date"], .filtro-campo select {
+    padding: 7px 10px; font-size: 12px; border: 1.5px solid #AAAAAA; border-radius: 6px;
+    background: #FFF; color: #111; min-width: 140px;
+  }
+  .filtro-limpiar {
+    border: 1.5px solid #BBBBBB; background: #FFF; color: #666; border-radius: 6px;
+    padding: 7px 12px; font-size: 11px; font-weight: 700; cursor: pointer; white-space: nowrap;
+  }
+  .filtro-limpiar:hover { border-color: #888; color: #111; }
+
   .table-wrap {
     background: #FFFFFF; border: 1.5px solid #BBBBBB; border-radius: 10px;
     overflow: auto; max-height: 60vh;
@@ -104,6 +121,7 @@
   tbody td {
     padding: 9px 12px; border-bottom: 1px solid #EEE; white-space: nowrap; color: #222;
   }
+  tbody tr { cursor: pointer; }
   tbody tr:hover { background: #FAFAFA; }
   .empty-msg, .loading-msg {
     text-align: center; padding: 40px 10px; color: #999; font-size: 13px;
@@ -114,6 +132,45 @@
   footer {
     text-align: center; margin-top: 24px; font-size: 11px; color: #AAAAAA;
   }
+
+  /* Modal detalle */
+  #modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(20,20,20,0.55);
+    align-items: center; justify-content: center; z-index: 998; padding: 16px;
+  }
+  #modal-overlay.show { display: flex; }
+  .modal-box {
+    background: #FFFFFF; border-radius: 10px; max-width: 560px; width: 100%;
+    max-height: 85vh; overflow-y: auto; box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+  }
+  .modal-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 20px; border-bottom: 1.5px solid #EEE;
+  }
+  .modal-head h3 { font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .modal-close {
+    border: none; background: none; font-size: 20px; color: #999; cursor: pointer; line-height: 1;
+  }
+  .modal-close:hover { color: #111; }
+  .modal-body { padding: 18px 20px; }
+  .detalle-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; margin-bottom: 18px;
+  }
+  .detalle-item label {
+    display: block; font-size: 9px; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0.5px; color: #999; margin-bottom: 2px;
+  }
+  .detalle-item span { font-size: 13px; color: #111; }
+  .modal-section-label {
+    font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px;
+    color: #777; margin-bottom: 8px;
+  }
+  table.items-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 4px; }
+  table.items-table th {
+    background: #F4F4F4; text-align: left; padding: 7px 10px; font-size: 10px;
+    text-transform: uppercase; color: #666; border-bottom: 1.5px solid #DDD;
+  }
+  table.items-table td { padding: 7px 10px; border-bottom: 1px solid #EEE; }
 </style>
 </head>
 <body>
@@ -143,8 +200,27 @@
       <div class="toolbar">
         <input type="text" id="buscador" placeholder="Buscar por número, destino, despacha o piloto..." oninput="renderTabla()">
         <button class="btn secondary" onclick="cargarPases()">&#8635; Actualizar</button>
-        <button class="btn secondary" id="btn-pdf" onclick="descargarPDF()">Descargar PDF</button>
-        <button class="btn" id="btn-excel" onclick="descargarExcel()">Descargar Excel</button>
+      </div>
+      <p class="sub" style="margin:-4px 0 14px; text-align:left; font-size:11.5px;">Toca un pase de la tabla para ver sus artículos y descargar su PDF individual.</p>
+
+      <div class="filtros">
+        <div class="filtro-campo">
+          <label>Desde</label>
+          <input type="date" id="filtro-desde" onchange="renderTabla()">
+        </div>
+        <div class="filtro-campo">
+          <label>Hasta</label>
+          <input type="date" id="filtro-hasta" onchange="renderTabla()">
+        </div>
+        <div class="filtro-campo">
+          <label>Destino</label>
+          <select id="filtro-destino" onchange="renderTabla()"><option value="">Todos</option></select>
+        </div>
+        <div class="filtro-campo">
+          <label>Piloto</label>
+          <select id="filtro-piloto" onchange="renderTabla()"><option value="">Todos</option></select>
+        </div>
+        <button class="filtro-limpiar" onclick="limpiarFiltros()">Limpiar filtros</button>
       </div>
 
       <div class="count-badge" id="count-badge"></div>
@@ -171,6 +247,19 @@
       </div>
 
       <footer>Sistema de control de pases de salida &mdash; Histórico</footer>
+    </div>
+  </div>
+
+  <div id="modal-overlay" onclick="if(event.target===this) cerrarModal()">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3 id="modal-titulo">Detalle del pase</h3>
+        <button class="modal-close" onclick="cerrarModal()">&times;</button>
+      </div>
+      <div class="modal-body" id="modal-body"></div>
+      <div style="padding: 0 20px 20px;">
+        <button class="btn" style="width:100%;" onclick="descargarPasePDF()">Descargar PDF de este pase</button>
+      </div>
     </div>
   </div>
 
@@ -211,14 +300,55 @@
     document.querySelectorAll('.tab-btn').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.empresa === emp);
     });
+    limpiarFiltros(false);
     cargarPases();
   }
 
-  function contarItems(itemsStr) {
+  function parseItems(itemsStr) {
     try {
       const arr = JSON.parse(itemsStr || '[]');
-      return Array.isArray(arr) ? arr.length : 0;
-    } catch (e) { return 0; }
+      return Array.isArray(arr) ? arr : [];
+    } catch (e) { return []; }
+  }
+
+  function contarItems(itemsStr) {
+    return parseItems(itemsStr).length;
+  }
+
+  // Convierte el timestamp guardado (string de Date de JS) a un objeto Date válido
+  function fechaDeTimestamp(ts) {
+    if (!ts) return null;
+    const d = new Date(ts);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  function poblarFiltros() {
+    const destinos = new Set();
+    const pilotos = new Set();
+    pasesActuales.forEach(p => {
+      if (p.destino) destinos.add(p.destino);
+      if (p.pilotoNombre) pilotos.add(p.pilotoNombre);
+    });
+    const selDestino = document.getElementById('filtro-destino');
+    const valDestino = selDestino.value;
+    selDestino.innerHTML = '<option value="">Todos</option>' +
+      [...destinos].sort().map(d => `<option value="${d}">${d}</option>`).join('');
+    selDestino.value = [...destinos].includes(valDestino) ? valDestino : '';
+
+    const selPiloto = document.getElementById('filtro-piloto');
+    const valPiloto = selPiloto.value;
+    selPiloto.innerHTML = '<option value="">Todos</option>' +
+      [...pilotos].sort().map(p => `<option value="${p}">${p}</option>`).join('');
+    selPiloto.value = [...pilotos].includes(valPiloto) ? valPiloto : '';
+  }
+
+  function limpiarFiltros(rerender) {
+    document.getElementById('buscador').value = '';
+    document.getElementById('filtro-desde').value = '';
+    document.getElementById('filtro-hasta').value = '';
+    document.getElementById('filtro-destino').value = '';
+    document.getElementById('filtro-piloto').value = '';
+    if (rerender !== false) renderTabla();
   }
 
   async function cargarPases() {
@@ -229,6 +359,7 @@
       const data = await res.json();
       pasesActuales = (data && data.pases) || [];
       pasesActuales.sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''));
+      poblarFiltros();
       renderTabla();
     } catch (e) {
       tbody.innerHTML = '<tr><td colspan="11" class="empty-msg">⚠️ No se pudo conectar con ' + NOMBRES_EMPRESA[empresaActual] + '.</td></tr>';
@@ -238,14 +369,33 @@
 
   function filasFiltradas() {
     const q = document.getElementById('buscador').value.trim().toLowerCase();
-    if (!q) return pasesActuales;
-    return pasesActuales.filter(p =>
-      String(p.numero || '').toLowerCase().includes(q) ||
-      String(p.destino || '').toLowerCase().includes(q) ||
-      String(p.despachaNombre || '').toLowerCase().includes(q) ||
-      String(p.pilotoNombre || '').toLowerCase().includes(q) ||
-      String(p.placa || '').toLowerCase().includes(q)
-    );
+    const desdeVal = document.getElementById('filtro-desde').value;
+    const hastaVal = document.getElementById('filtro-hasta').value;
+    const destinoVal = document.getElementById('filtro-destino').value;
+    const pilotoVal = document.getElementById('filtro-piloto').value;
+    const desde = desdeVal ? new Date(desdeVal + 'T00:00:00') : null;
+    const hasta = hastaVal ? new Date(hastaVal + 'T23:59:59') : null;
+
+    return pasesActuales.filter(p => {
+      if (q) {
+        const matchTexto =
+          String(p.numero || '').toLowerCase().includes(q) ||
+          String(p.destino || '').toLowerCase().includes(q) ||
+          String(p.despachaNombre || '').toLowerCase().includes(q) ||
+          String(p.pilotoNombre || '').toLowerCase().includes(q) ||
+          String(p.placa || '').toLowerCase().includes(q);
+        if (!matchTexto) return false;
+      }
+      if (destinoVal && p.destino !== destinoVal) return false;
+      if (pilotoVal && p.pilotoNombre !== pilotoVal) return false;
+      if (desde || hasta) {
+        const fp = fechaDeTimestamp(p.timestamp);
+        if (!fp) return false;
+        if (desde && fp < desde) return false;
+        if (hasta && fp > hasta) return false;
+      }
+      return true;
+    });
   }
 
   function renderTabla() {
@@ -258,7 +408,7 @@
       return;
     }
     tbody.innerHTML = filas.map(p => `
-      <tr>
+      <tr onclick="abrirDetalle(${pasesActuales.indexOf(p)})">
         <td>${p.numero || ''}</td>
         <td>${p.bodega || ''}</td>
         <td>${p.destino || ''}</td>
@@ -274,55 +424,104 @@
     `).join('');
   }
 
-  function descargarPDF() {
-    const filas = filasFiltradas();
-    if (filas.length === 0) { alert('No hay datos para exportar.'); return; }
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'letter' });
-    doc.setFontSize(12);
-    doc.text(`Histórico de Pases de Salida — ${NOMBRES_EMPRESA[empresaActual]}`, 14, 14);
-    doc.setFontSize(9);
-    doc.setTextColor(120);
-    doc.text(`Generado: ${new Date().toLocaleString('es-GT')}`, 14, 20);
-
-    doc.autoTable({
-      startY: 26,
-      styles: { fontSize: 7, cellPadding: 2 },
-      headStyles: { fillColor: [17, 17, 17] },
-      head: [['No.', 'Bodega', 'Destino', 'Fecha', 'Lugar', 'Despacha', 'Piloto', 'Placa', 'Art.', 'Generado por', 'Registrado']],
-      body: filas.map(p => [
-        p.numero || '', p.bodega || '', p.destino || '', p.fecha || '', p.lugar || '',
-        (p.despachaNombre || '') + (p.despachaCargo ? ' - ' + p.despachaCargo : ''),
-        (p.pilotoNombre || '') + (p.pilotoTipo ? ' - ' + p.pilotoTipo : ''),
-        p.placa || '', String(contarItems(p.items)), p.generadoPor || '', p.timestamp || ''
-      ])
-    });
-
-    doc.save(`Historico_${empresaActual}_${new Date().toISOString().slice(0,10)}.pdf`);
+  function escapeHtml(str) {
+    return String(str || '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
   }
 
-  function descargarExcel() {
-    const filas = filasFiltradas();
-    if (filas.length === 0) { alert('No hay datos para exportar.'); return; }
-    const rows = filas.map(p => ({
-      'No.': p.numero || '',
-      'Bodega': p.bodega || '',
-      'Destino': p.destino || '',
-      'Fecha': p.fecha || '',
-      'Lugar': p.lugar || '',
-      'Despacha - Cargo': p.despachaCargo || '',
-      'Despacha - Nombre': p.despachaNombre || '',
-      'Piloto - Tipo': p.pilotoTipo || '',
-      'Piloto - Nombre': p.pilotoNombre || '',
-      'Placa': p.placa || '',
-      'Artículos': contarItems(p.items),
-      'Generado por': p.generadoPor || '',
-      'Registrado': p.timestamp || ''
-    }));
-    const ws = XLSX.utils.json_to_sheet(rows);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Historico');
-    XLSX.writeFile(wb, `Historico_${empresaActual}_${new Date().toISOString().slice(0,10)}.xlsx`);
+  let modalIdxActual = null;
+
+  function abrirDetalle(idx) {
+    const p = pasesActuales[idx];
+    if (!p) return;
+    modalIdxActual = idx;
+    document.getElementById('modal-titulo').textContent = `Pase No. ${p.numero || ''}`;
+    const items = parseItems(p.items);
+    const itemsFilas = items.map(it => {
+      // it viene como [numero_fila, mercaderia, cantidad, motivo]
+      const arr = Array.isArray(it) ? it : [null, '', '', ''];
+      const merc = arr[1], cant = arr[2], mot = arr[3];
+      return `<tr><td>${escapeHtml(merc)}</td><td>${escapeHtml(cant)}</td><td>${escapeHtml(mot)}</td></tr>`;
+    }).join('');
+
+    document.getElementById('modal-body').innerHTML = `
+      <div class="detalle-grid">
+        <div class="detalle-item"><label>Bodega</label><span>${escapeHtml(p.bodega)}</span></div>
+        <div class="detalle-item"><label>Destino</label><span>${escapeHtml(p.destino)}</span></div>
+        <div class="detalle-item"><label>Fecha</label><span>${escapeHtml(p.fecha)}</span></div>
+        <div class="detalle-item"><label>Lugar</label><span>${escapeHtml(p.lugar)}</span></div>
+        <div class="detalle-item"><label>Despacha</label><span>${escapeHtml(p.despachaNombre)} ${p.despachaCargo ? '— ' + escapeHtml(p.despachaCargo) : ''}</span></div>
+        <div class="detalle-item"><label>Piloto</label><span>${escapeHtml(p.pilotoNombre)} ${p.pilotoTipo ? '— ' + escapeHtml(p.pilotoTipo) : ''}</span></div>
+        <div class="detalle-item"><label>Placa</label><span>${escapeHtml(p.placa) || '—'}</span></div>
+        <div class="detalle-item"><label>Generado por</label><span>${escapeHtml(p.generadoPor)}</span></div>
+        <div class="detalle-item"><label>Registrado</label><span>${escapeHtml(p.timestamp)}</span></div>
+      </div>
+      <div class="modal-section-label">Artículos despachados (${items.length})</div>
+      <table class="items-table">
+        <thead><tr><th>Mercadería</th><th>Cantidad</th><th>Motivo</th></tr></thead>
+        <tbody>${itemsFilas || '<tr><td colspan="3" style="color:#999;">Sin artículos registrados</td></tr>'}</tbody>
+      </table>
+    `;
+    document.getElementById('modal-overlay').classList.add('show');
+  }
+
+  function cerrarModal() {
+    document.getElementById('modal-overlay').classList.remove('show');
+  }
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') cerrarModal(); });
+
+  function descargarPasePDF() {
+    const p = pasesActuales[modalIdxActual];
+    if (!p) return;
+    const items = parseItems(p.items);
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter' });
+    const W = doc.internal.pageSize.getWidth();
+
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.setTextColor(0);
+    doc.text('PASE DE SALIDA DE BODEGA', 14, 16);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(100);
+    doc.text(NOMBRES_EMPRESA[empresaActual], 14, 22);
+    doc.setDrawColor(0); doc.setLineWidth(0.5);
+    doc.line(14, 26, W - 14, 26);
+
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(0);
+    doc.text(`No.: ${p.numero || ''}`, 14, 34);
+    doc.text(`Fecha: ${p.fecha || ''}`, 80, 34);
+    doc.text(`Lugar: ${p.lugar || ''}`, W - 14, 34, { align: 'right' });
+    doc.text(`Bodega: ${p.bodega || ''}`, 14, 40);
+    doc.text(`Destino: ${p.destino || ''}`, 80, 40);
+
+    doc.autoTable({
+      startY: 47,
+      styles: { fontSize: 9, cellPadding: 3 },
+      headStyles: { fillColor: [17, 17, 17] },
+      head: [['#', 'Mercadería', 'Cantidad', 'Motivo']],
+      body: items.length
+        ? items.map((it, i) => {
+            const arr = Array.isArray(it) ? it : [i + 1, '', '', ''];
+            return [arr[0] ?? (i + 1), arr[1] || '', arr[2] || '', arr[3] || ''];
+          })
+        : [['—', 'Sin artículos registrados', '', '']]
+    });
+
+    const y = doc.lastAutoTable.finalY + 16;
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(9);
+    doc.text('Quien despacha', 14, y);
+    doc.text('Piloto', 110, y);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`${p.despachaNombre || ''}${p.despachaCargo ? ' — ' + p.despachaCargo : ''}`, 14, y + 6);
+    doc.text(`${p.pilotoNombre || ''}${p.pilotoTipo ? ' — ' + p.pilotoTipo : ''}${p.placa ? ' — Placa: ' + p.placa : ''}`, 110, y + 6);
+    doc.setDrawColor(0); doc.setLineWidth(0.4);
+    doc.line(14, y + 14, 95, y + 14);
+    doc.line(110, y + 14, W - 14, y + 14);
+    doc.setFontSize(7); doc.setTextColor(150);
+    doc.text('Firma', 54, y + 18, { align: 'center' });
+    doc.text('Firma', (110 + W - 14) / 2, y + 18, { align: 'center' });
+
+    doc.setFontSize(7); doc.setTextColor(150);
+    doc.text(`Generado por: ${p.generadoPor || ''}   |   Registrado: ${p.timestamp || ''}`, 14, y + 30);
+
+    doc.save(`PaseSalida_${(p.numero || 'sn').toString().replace(/[^a-zA-Z0-9]/g, '_')}_${empresaActual}.pdf`);
   }
 </script>
 </body>
