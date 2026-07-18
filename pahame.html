@@ -217,6 +217,7 @@
     apiGet({ action: 'siguienteNumero', bodega: area }).then(data => {
       if (data && data.numero) {
         campo.value = data.numero;
+        campo.readOnly = false;
       } else {
         campo.readOnly = false;
         campo.value = area + '-';

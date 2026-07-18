@@ -239,6 +239,7 @@
       if (data && data.numero) {
         campo.value = data.numero;
         campo.placeholder = area + '-001';
+        campo.readOnly = false;
       } else {
         throw new Error('sin numero');
       }
