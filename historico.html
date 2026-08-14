@@ -429,7 +429,7 @@ const campoPiloto = lonas ? p.encargadoBodega : p.pilotoNombre;
 if (campoPiloto !== pilotoVal) return false;
 }
 if (desde || hasta) {
-const fp = fechaDeTimestamp(p.timestamp)";
+const fp = fechaDeTimestamp(p.timestamp);
 if (!fp) return false;
 if (desde && fp < desde) return false;
 if (hasta && fp > hasta) return false;
