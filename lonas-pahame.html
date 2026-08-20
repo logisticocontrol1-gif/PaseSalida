@@ -287,7 +287,7 @@ const pageH = doc.internal.pageSize.getHeight();
 // Logo grande, proporción real (347x248px) para que no se vea distorsionado
 const logoW = 52;
 const logoH = logoW / (347/248);
-try { doc.addImage(LOGO_DATA, 'PNG', 14, 14, logoW, logoH); } catch(e) {}
+try { doc.addImage(LOGO_DATA, 'JPEG', 14, 14, logoW, logoH); } catch(e) {}
 
 // Lugar / fecha / correlativo, arriba a la derecha (igual que la carta original + el número)
 doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(0);
@@ -302,9 +302,13 @@ let y = 14 + logoH + 18;
 doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(0);
 doc.text('REQUERIMIENTO:', 14, y);
 y += 6;
-const reqLines = doc.splitTextToSize(bodegaDestino.toUpperCase(), W-28);
-doc.text(reqLines, 14, y);
-y += reqLines.length * 6 + 10;
+const partesReq = bodegaDestino.split(',');
+const reqLinea1 = ('A ' + (partesReq[0] || '').trim()).toUpperCase();
+const reqLinea2 = (partesReq.slice(1).join(',') || '').trim().toUpperCase();
+doc.text(reqLinea1, 14, y);
+y += 6;
+if (reqLinea2) { doc.text(reqLinea2, 14, y); y += 6; }
+y += 8;
 
 // Intro
 doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(0);
