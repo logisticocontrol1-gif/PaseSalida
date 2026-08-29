@@ -196,6 +196,7 @@ table.items-table td { padding: 7px 10px; border-bottom: 1px solid #EEE; }
 <button class="tab-btn" data-empresa="PAHAME" onclick="cambiarEmpresa('PAHAME')">Pahame</button>
 <button class="tab-btn" data-empresa="ESTRAHU" onclick="cambiarEmpresa('ESTRAHU')">Estrahú</button>
 <button class="tab-btn" data-empresa="LONAS_PAHAME" onclick="cambiarEmpresa('LONAS_PAHAME')">Lonas (Pahame)</button>
+<button class="tab-btn" data-empresa="ENVIOS" onclick="cambiarEmpresa('ENVIOS')">Envío Interno</button>
 </div>
 
 <div class="toolbar">
@@ -291,22 +292,25 @@ const APIS = {
 ALOPSA: 'https://script.google.com/macros/s/AKfycbxZUxbrNsiOiku48FfGigj0fNnYQJLQPphU0ije_e4JM3LEMzyqbG66z_H2L1GAGbdN/exec',
 PAHAME: 'https://script.google.com/macros/s/AKfycbzKklWfuBXRkqgVwxL8nNgWm3m8lTN1ZLeOhqK4RgT41stMeqhv9ZLNSe_nlB_dzS6D9w/exec',
 ESTRAHU: 'https://script.google.com/macros/s/AKfycbwKhlhx0ysOsb59-_UR0t9VLN__Jdh-CmlokauhJFpgvF3XoysjtoRBOwtxgK_EPAi-/exec',
-LONAS_PAHAME: 'https://script.google.com/macros/s/AKfycbzKklWfuBXRkqgVwxL8nNgWm3m8lTN1ZLeOhqK4RgT41stMeqhv9ZLNSe_nlB_dzS6D9w/exec'
+LONAS_PAHAME: 'https://script.google.com/macros/s/AKfycbzKklWfuBXRkqgVwxL8nNgWm3m8lTN1ZLeOhqK4RgT41stMeqhv9ZLNSe_nlB_dzS6D9w/exec',
+  ENVIOS: 'https://script.google.com/macros/s/AKfycbxv3r6ZPfDV81Ah95UwMxLRtrcd_l1z_divHZgyytZz9oBufaQ7bFtNGRnvB9Pqw5wE/exec'
 };
-const NOMBRES_EMPRESA = { ALOPSA: 'ALOPSA', PAHAME: 'Pahame', ESTRAHU: 'Estrahú', LONAS_PAHAME: 'Solicitud de Lonas (Pahame)' };
+const NOMBRES_EMPRESA = { ALOPSA: 'ALOPSA', PAHAME: 'Pahame', ESTRAHU: 'Estrahú', LONAS_PAHAME: 'Solicitud de Lonas (Pahame)', ENVIOS: 'Envío Interno de Documentos y Paquetes' };
 
 const COLS_PASE = ['No.','Bodega','Destino','Fecha','Lugar','Despacha','Piloto','Placa','Artículos','Generado por','Registrado'];
 const COLS_LONAS = ['No.','Bodega destino','Fecha','Lugar','Supervisor patio','Gerente terminal','Encargado bodega','Artículos','Generado por','Registrado'];
+const COLS_ENVIOS = ['No.','Destinatario','Fecha','Tipo','Remitente','Recibido por','Fecha recepción','Generado por','Registrado'];
 
 let empresaActual = 'ALOPSA';
 let pasesActuales = [];
 let modalIdxActual = null;
 
 function esLonas() { return empresaActual === 'LONAS_PAHAME'; }
-function numCols() { return esLonas() ? COLS_LONAS.length : COLS_PASE.length; }
+function esEnvios() { return empresaActual === 'ENVIOS'; }
+function numCols() { return esEnvios() ? COLS_ENVIOS.length : (esLonas() ? COLS_LONAS.length : COLS_PASE.length); }
 
 function pintarEncabezado() {
-const cols = esLonas() ? COLS_LONAS : COLS_PASE;
+const cols = esEnvios() ? COLS_ENVIOS : (esLonas() ? COLS_LONAS : COLS_PASE);
 document.getElementById('tabla-head-row').innerHTML = cols.map(c => '<th>' + c + '</th>').join('');
 }
 
@@ -315,11 +319,11 @@ empresaActual = emp;
 document.querySelectorAll('.tab-btn').forEach(btn => {
 btn.classList.toggle('active', btn.dataset.empresa === emp);
 });
-document.getElementById('label-destino').textContent = esLonas() ? 'Bodega destino' : 'Destino';
-document.getElementById('label-piloto').textContent = esLonas() ? 'Encargado bodega' : 'Piloto';
+document.getElementById('label-destino').textContent = esLonas() ? 'Bodega destino' : (esEnvios() ? 'Destinatario' : 'Destino');
+document.getElementById('label-piloto').textContent = esLonas() ? 'Encargado bodega' : (esEnvios() ? 'Remitente' : 'Piloto');
 document.getElementById('buscador').placeholder = esLonas()
 ? 'Buscar por número, bodega destino o encargado...'
-: 'Buscar por número, destino, despacha o piloto...';
+: (esEnvios() ? 'Buscar por número, destinatario o remitente...' : 'Buscar por número, destino, despacha o piloto...');
 pintarEncabezado();
 limpiarFiltros(false);
 cargarPases();
@@ -344,6 +348,7 @@ return isNaN(d.getTime()) ? null : d;
 }
 
 function poblarFiltros() {
+if (esEnvios()) { return poblarFiltrosEnvios(); }
 const destinos = new Set();
 const pilotos = new Set();
 const lonas = esLonas();
@@ -379,6 +384,7 @@ if (rerender !== false) renderTabla();
 }
 
 async function cargarPases() {
+if (esEnvios()) { return cargarPasesEnvios(); }
 const tbody = document.getElementById('tabla-body');
 tbody.innerHTML = `<tr><td colspan="${numCols()}" class="loading-msg">Cargando…</td></tr>`;
 try {
@@ -396,6 +402,7 @@ document.getElementById('count-badge').textContent = '';
 }
 
 function filasFiltradas() {
+if (esEnvios()) { return filasFiltradasEnvios(); }
 const q = document.getElementById('buscador').value.trim().toLowerCase();
 const desdeVal = document.getElementById('filtro-desde').value;
 const hastaVal = document.getElementById('filtro-hasta').value;
@@ -439,6 +446,7 @@ return true;
 }
 
 function renderTabla() {
+if (esEnvios()) { return renderTablaEnvios(); }
 const tbody = document.getElementById('tabla-body');
 const filas = filasFiltradas();
 const lonas = esLonas();
@@ -486,6 +494,32 @@ function abrirDetalle(idx) {
 const p = pasesActuales[idx];
 if (!p) return;
 modalIdxActual = idx;
+
+if (esEnvios()) {
+document.getElementById('modal-titulo').textContent = 'Envío No. ' + (p.numero || '');
+var tiposD = [p.tipoDocumentos && 'Documentos', p.tipoPaquete && 'Paquete', p.tipoConfidencial && 'Confidencial', p.tipoOtro && 'Otro'].filter(Boolean).join(', ') || '—';
+document.getElementById('modal-body').innerHTML =
+'<div class="detalle-grid">' +
+'<div class="detalle-item"><label>Fecha</label><span>' + escapeHtml(p.fecha) + '</span></div>' +
+'<div class="detalle-item"><label>Tipo</label><span>' + escapeHtml(tiposD) + '</span></div>' +
+'<div class="detalle-item"><label>Empresa destinataria</label><span>' + (escapeHtml(p.destEmpresa) || '—') + '</span></div>' +
+'<div class="detalle-item"><label>Área destino</label><span>' + (escapeHtml(p.destArea) || '—') + '</span></div>' +
+'<div class="detalle-item"><label>Nombre de quien recibe</label><span>' + (escapeHtml(p.destNombre) || '—') + '</span></div>' +
+'<div class="detalle-item"><label>Descripción</label><span>' + (escapeHtml(p.descripcion) || '—') + '</span></div>' +
+'<div class="detalle-item"><label>Empresa remitente</label><span>' + (escapeHtml(p.remEmpresa) || '—') + '</span></div>' +
+'<div class="detalle-item"><label>Área remitente</label><span>' + (escapeHtml(p.remArea) || '—') + '</span></div>' +
+'<div class="detalle-item"><label>Nombre remitente</label><span>' + (escapeHtml(p.remNombre) || '—') + '</span></div>' +
+'<div class="detalle-item"><label>Teléfono remitente</label><span>' + (escapeHtml(p.remTelefono) || '—') + '</span></div>' +
+'<div class="detalle-item"><label>Fecha de recepción</label><span>' + (escapeHtml(p.fechaRecepcion) || '—') + '</span></div>' +
+'<div class="detalle-item"><label>Recibido por</label><span>' + (escapeHtml(p.recibeNombre) || '—') + '</span></div>' +
+'<div class="detalle-item"><label>Firma</label><span>' + (escapeHtml(p.firma) || '—') + '</span></div>' +
+'<div class="detalle-item"><label>Observaciones</label><span>' + (escapeHtml(p.observaciones) || '—') + '</span></div>' +
+'<div class="detalle-item"><label>Generado por</label><span>' + escapeHtml(p.generadoPor) + '</span></div>' +
+'<div class="detalle-item"><label>Registrado</label><span>' + escapeHtml(p.timestamp) + '</span></div>' +
+'</div>';
+document.getElementById('modal-overlay').classList.add('show');
+return;
+}
 
 if (esLonas()) {
 document.getElementById('modal-titulo').textContent = `Solicitud No. ${p.numero || ''}`;
@@ -553,7 +587,7 @@ document.getElementById('modal-overlay').classList.remove('show');
 document.addEventListener('keydown', e => { if (e.key === 'Escape') cerrarModal(); });
 
 function descargarDetallePDF() {
-if (esLonas()) { descargarLonaPDF(); } else { descargarPasePDF(); }
+if (esLonas()) { descargarLonaPDF(); } else if (esEnvios()) { descargarEnvioPDF(); } else { descargarPasePDF(); }
 }
 
 function descargarPasePDF() {
@@ -668,6 +702,154 @@ doc.text(`Generado por: ${p.generadoPor || ''} | Registrado: ${p.timestamp || ''
 
 doc.save(`SolicitudLonas_${(p.numero || 'sn').toString().replace(/[^a-zA-Z0-9]/g, '_')}_PAHAME.pdf`);
 }
+
+function poblarFiltrosEnvios() {
+var destinos = new Set();
+var remitentes = new Set();
+pasesActuales.forEach(function(p) {
+if (p.destEmpresa) destinos.add(p.destEmpresa);
+if (p.remNombre) remitentes.add(p.remNombre);
+});
+var selDestino = document.getElementById('filtro-destino');
+var valDestino = selDestino.value;
+var optsD = '<option value="">Todos</option>';
+Array.from(destinos).sort().forEach(function(d) { optsD += '<option value="' + d + '">' + d + '</option>'; });
+selDestino.innerHTML = optsD;
+selDestino.value = Array.from(destinos).indexOf(valDestino) !== -1 ? valDestino : '';
+var selPiloto = document.getElementById('filtro-piloto');
+var valPiloto = selPiloto.value;
+var optsP = '<option value="">Todos</option>';
+Array.from(remitentes).sort().forEach(function(r) { optsP += '<option value="' + r + '">' + r + '</option>'; });
+selPiloto.innerHTML = optsP;
+selPiloto.value = Array.from(remitentes).indexOf(valPiloto) !== -1 ? valPiloto : '';
+}
+
+async function cargarPasesEnvios() {
+var tbody = document.getElementById('tabla-body');
+tbody.innerHTML = '<tr><td colspan="' + numCols() + '" class="loading-msg">Cargando…</td></tr>';
+try {
+var res = await fetch(APIS.ENVIOS + '?action=listarEnvios');
+var data = await res.json();
+pasesActuales = (data && data.envios) || [];
+pasesActuales.sort(function(a, b) { return (b.timestamp || '').localeCompare(a.timestamp || ''); });
+poblarFiltros();
+renderTabla();
+} catch (e) {
+tbody.innerHTML = '<tr><td colspan="' + numCols() + '" class="empty-msg">⚠️ No se pudo conectar con ' + NOMBRES_EMPRESA.ENVIOS + '.</td></tr>';
+document.getElementById('count-badge').textContent = '';
+}
+}
+
+function filasFiltradasEnvios() {
+var q = document.getElementById('buscador').value.trim().toLowerCase();
+var desdeVal = document.getElementById('filtro-desde').value;
+var hastaVal = document.getElementById('filtro-hasta').value;
+var destinoVal = document.getElementById('filtro-destino').value;
+var pilotoVal = document.getElementById('filtro-piloto').value;
+var desde = desdeVal ? new Date(desdeVal + 'T00:00:00') : null;
+var hasta = hastaVal ? new Date(hastaVal + 'T23:59:59') : null;
+return pasesActuales.filter(function(p) {
+if (q) {
+var matchTexto = String(p.numero || '').toLowerCase().indexOf(q) !== -1 ||
+String(p.destEmpresa || '').toLowerCase().indexOf(q) !== -1 ||
+String(p.destNombre || '').toLowerCase().indexOf(q) !== -1 ||
+String(p.remEmpresa || '').toLowerCase().indexOf(q) !== -1 ||
+String(p.remNombre || '').toLowerCase().indexOf(q) !== -1;
+if (!matchTexto) return false;
+}
+if (destinoVal && p.destEmpresa !== destinoVal) return false;
+if (pilotoVal && p.remNombre !== pilotoVal) return false;
+if (desde || hasta) {
+var fp = fechaDeTimestamp(p.timestamp);
+if (!fp) return false;
+if (desde && fp < desde) return false;
+if (hasta && fp > hasta) return false;
+}
+return true;
+});
+}
+
+function renderTablaEnvios() {
+var tbody = document.getElementById('tabla-body');
+var filas = filasFiltradasEnvios();
+document.getElementById('count-badge').textContent = filas.length + ' envío' + (filas.length === 1 ? '' : 's') + ' de ' + NOMBRES_EMPRESA.ENVIOS;
+if (filas.length === 0) {
+tbody.innerHTML = '<tr><td colspan="' + numCols() + '" class="empty-msg">No hay envíos registrados.</td></tr>';
+return;
+}
+tbody.innerHTML = filas.map(function(p) {
+var tipos = [p.tipoDocumentos && 'Documentos', p.tipoPaquete && 'Paquete', p.tipoConfidencial && 'Confidencial', p.tipoOtro && 'Otro'].filter(Boolean).join(', ');
+return '<tr onclick="abrirDetalle(' + pasesActuales.indexOf(p) + ')">' +
+'<td>' + (p.numero || '') + '</td>' +
+'<td>' + ((p.destEmpresa || '') + (p.destNombre ? ' — ' + p.destNombre : '')) + '</td>' +
+'<td>' + (p.fecha || '') + '</td>' +
+'<td>' + tipos + '</td>' +
+'<td>' + ((p.remEmpresa || '') + (p.remNombre ? ' — ' + p.remNombre : '')) + '</td>' +
+'<td>' + (p.recibeNombre || '') + '</td>' +
+'<td>' + (p.fechaRecepcion || '') + '</td>' +
+'<td>' + (p.generadoPor || '') + '</td>' +
+'<td>' + (p.timestamp || '') + '</td>' +
+'</tr>';
+}).join('');
+}
+
+function descargarEnvioPDF() {
+var p = pasesActuales[modalIdxActual];
+if (!p) return;
+var jsPDFCtor = window.jspdf.jsPDF;
+var doc = new jsPDFCtor({ orientation: 'portrait', unit: 'mm', format: 'letter' });
+var W = doc.internal.pageSize.getWidth();
+
+doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.setTextColor(0);
+doc.text('ENVÍO INTERNO DE DOCUMENTOS Y PAQUETES', 14, 16);
+doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(100);
+doc.text('Lineamiento Corporativo de Identificación y Traslado', 14, 22);
+doc.setDrawColor(0); doc.setLineWidth(0.5);
+doc.line(14, 26, W - 14, 26);
+
+doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(0);
+doc.text('No.: ' + (p.numero || ''), 14, 34);
+doc.text('Fecha: ' + (p.fecha || ''), 80, 34);
+var tipos = [p.tipoDocumentos && 'Documentos', p.tipoPaquete && 'Paquete', p.tipoConfidencial && 'Confidencial', p.tipoOtro && 'Otro'].filter(Boolean).join(', ') || '—';
+doc.text('Tipo: ' + tipos, W - 14, 34, { align: 'right' });
+
+doc.setFont('helvetica', 'bold'); doc.setFontSize(9);
+doc.text('Destinatario', 14, 44);
+doc.setFont('helvetica', 'normal');
+doc.text((p.destEmpresa || '') + (p.destArea ? ' — ' + p.destArea : ''), 14, 50);
+doc.text(p.destNombre || '', 14, 56);
+
+doc.setFont('helvetica', 'bold');
+doc.text('Remitente', 110, 44);
+doc.setFont('helvetica', 'normal');
+doc.text((p.remEmpresa || '') + (p.remArea ? ' — ' + p.remArea : ''), 110, 50);
+doc.text((p.remNombre || '') + (p.remTelefono ? ' — ' + p.remTelefono : ''), 110, 56);
+
+doc.setFont('helvetica', 'bold'); doc.setFontSize(9);
+doc.text('Descripción breve', 14, 68);
+doc.setFont('helvetica', 'normal');
+var descLines = doc.splitTextToSize(p.descripcion || '—', W - 28);
+doc.text(descLines, 14, 74);
+
+var y = 74 + descLines.length * 5 + 10;
+doc.setDrawColor(0); doc.setLineWidth(0.4);
+doc.line(14, y - 6, W - 14, y - 6);
+
+doc.setFont('helvetica', 'bold'); doc.setFontSize(9);
+doc.text('Control de recepción', 14, y);
+doc.setFont('helvetica', 'normal');
+doc.text('Fecha de recepción: ' + (p.fechaRecepcion || '—'), 14, y + 6);
+doc.text('Recibe: ' + (p.recibeNombre || '—'), 14, y + 12);
+doc.text('Firma: ' + (p.firma || '—'), 14, y + 18);
+var obsLines = doc.splitTextToSize('Observaciones: ' + (p.observaciones || '—'), W - 28);
+doc.text(obsLines, 14, y + 24);
+
+doc.setFontSize(7); doc.setTextColor(150);
+doc.text('Generado por: ' + (p.generadoPor || '') + ' | Registrado: ' + (p.timestamp || ''), 14, y + 24 + obsLines.length * 5 + 8);
+
+doc.save('EnvioInterno_' + (p.numero || 'sn').toString().replace(/[^a-zA-Z0-9]/g, '_') + '.pdf');
+}
+
 </script>
 </body>
 </html>
