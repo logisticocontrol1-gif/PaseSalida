@@ -223,13 +223,55 @@
       descripcion: document.getElementById('descripcion').value.trim(),
       remEmpresa: document.getElementById('rem-empresa').value.trim(),
       remArea: document.getElementById('rem-area').value.trim(),
-      remNombre: document.getElementById(�ɕ������ɔ���م�Ք��ɥ����(������ɕ�Q�������聑��յ��й���������	�%���ɕ��ѕ���������م�Ք��ɥ����(�����������I��������聑��յ��й���������	�%���������ɕ����������م�Ք��ɥ����(������ɕ����9���ɔ聑��յ��й���������	�%���ɕ���������ɔ���م�Ք��ɥ����(��������ɵ�聑��յ��й���������	�%�����ɵ����م�Ք��ɥ����(��������͕�م������聑��յ��й���������	�%�����͕�م�����̜��م�Ք��ɥ����(����������Ʌ��A��耜��(������������-���	=}-d(������(���((������R�R �9IH�A���UIH�8�1�9U	(���չ�ѥ�������Ʌ�A����(��������Ё�յ�ɼ�􁑽�յ��й���������	�%����յ�ɼ���م�Ք��ɥ����(����������յ�ɼ�����յ�ɼ����	=}-d��������쁵���Ʌ�Q���Р��j���<�%��ɕ̈́�����鵕ɼ�����������쁑��յ��й���������	�%����յ�ɼ�������̠��ɕ��ɸ��((��������Ё���ɕ������ѽ̠��(�����������������ɕ̈́�����������9���ɔ��쁵���Ʌ�Q���Р��j���<�
-�����ф���́��ѽ́�������ѥ��хɥ���쁑��յ��й���������	�%������е���ɕ̈́�������̠��ɕ��ɸ��(�����������ɕ���ɕ̈́�������ɕ�9���ɔ��쁵���Ʌ�Q���Р��j���<�
-�����ф���́��ѽ́����ɕ��ѕ�є��쁑��յ��й���������	�%���ɕ�����ɕ̈́�������̠��ɕ��ɸ��(�����������ѥ����յ��ѽ̀������ѥ��A��Օє�������ѥ��
-������������������ѥ��=�ɼ��쁵���Ʌ�Q���Р��j���<�M�������������ѥ��������������ɕ��ɸ��((�������թ��A����((�������A��С쁅�ѥ��耝�Յɑ���٥������������ѡ���ɕ̀����(����������ɕ̀���ɕ̹�����(������������Ʌ�Q���Р��r�Յɑ�����������Չ����(������􁕱͔��(������������Ʌ�Q���Р��j���<�9��͔��Ց���Յɑ�ȁ�������Չ����(�������(���������э������������Ʌ�Q���Р��j���<�M��������͸�����͔��Յɓ́�������Չ�����(���((���չ�ѥ������թ��A�����(��������Ё쁩�A���ݥ���ܹ������(��������Ё����􁹕܁��A�쁽ɥ��хѥ��耝����Ʌ�М��չ��耝�������ɵ��耝���ѕȜ����(��������Ё\�􁑽����ѕɹ�������M�锹���]��Ѡ���(��������Ё���� �􁑽����ѕɹ�������M�锹���!����Р��(��������Ё��ɝ��0���а���ɝ��H�����(��������Ё�����l����Ȱ���t�(������Ё�����((�����չ�ѥ���͕�ѥ��	�ȡѥѱ������ँ�(����������͕����
-���Ƞ��������(����������ɕ�С��ɝ��0��䰁\�����ɝ��0�����ɝ��H���������(����������͕���Р����ٕѥ������������쁑���͕����M�锠���쁑���͕�Q���
-���Ƞ��԰���԰���Ԥ�(����������ѕ�Сѥѱ��ѽU����
-�͔������ɝ��0���̰�䀬�����ȸԤ�(������䀬􁠀����(�����(�����չ�ѥ��������1�ne(label, value) {
+      remNombre: document.getElementById('rem-nombre').value.trim(),
+      remTelefono: document.getElementById('rem-telefono').value.trim(),
+      fechaRecepcion: document.getElementById('fecha-recepcion').value.trim(),
+      recibeNombre: document.getElementById('recibe-nombre').value.trim(),
+      firma: document.getElementById('firma').value.trim(),
+      observaciones: document.getElementById('observaciones').value.trim(),
+      generadoPor: '',
+      bodegaKey: BODEGA_KEY
+    };
+  }
+
+  // ── GENERAR PDF + GUARDAR EN LA NUBE
+  function generarPDF() {
+    const numero = document.getElementById('numero').value.trim();
+    if (!numero || numero === BODEGA_KEY + '-') { mostrarToast('⚠️ Ingresa el número de envío'); document.getElementById('numero').focus(); return; }
+
+    const d = recogerDatos();
+    if (!d.destEmpresa && !d.destNombre) { mostrarToast('⚠️ Completa los datos del destinatario'); document.getElementById('dest-empresa').focus(); return; }
+    if (!d.remEmpresa && !d.remNombre) { mostrarToast('⚠️ Completa los datos del remitente'); document.getElementById('rem-empresa').focus(); return; }
+    if (!d.tipoDocumentos && !d.tipoPaquete && !d.tipoConfidencial && !d.tipoOtro) { mostrarToast('⚠️ Selecciona el tipo de envío'); return; }
+
+    dibujarPDF(d);
+
+    apiPost({ action: 'guardarEnvio', ...d }).then(res => {
+      if (res && res.ok) {
+        mostrarToast('✅ Guardado en la nube');
+      } else {
+        mostrarToast('⚠️ No se pudo guardar en la nube');
+      }
+    }).catch(() => mostrarToast('⚠️ Sin conexión, no se guardó en la nube'));
+  }
+
+  function dibujarPDF(d) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter' });
+    const W = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+    const marginL = 14, marginR = 14;
+    const navy = [0, 32, 96];
+    let y = 14;
+
+    function sectionBar(title, h = 8) {
+      doc.setFillColor(...navy);
+      doc.rect(marginL, y, W - marginL - marginR, h, 'F');
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(255, 255, 255);
+      doc.text(title.toUpperCase(), marginL + 3, y + h - 2.5);
+      y += h + 5;
+    }
+    function fieldLine(label, value) {
       doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(90);
       doc.text(label.toUpperCase() + ':', marginL, y);
       doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(0);
@@ -299,7 +341,7 @@
     fieldLine('Teléfono / Extensión', d.remTelefono);
     y += 2;
 
-    checkPageBreak(60);
+    checkPageBreaj(60);
 
     // CONTROL DE RECEPCIÓN
     sectionBar('Control de recepción');
