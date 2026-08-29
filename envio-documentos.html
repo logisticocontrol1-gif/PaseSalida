@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Envío Interno de Documentos y Paquetes</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #EEEEEE; color: #111; min-height: 100vh; padding: 16px; }
+  .card { background: #FFFFFF; border: 1.5px solid #BBBBBB; border-radius: 8px; max-width: 680px; margin: 0 auto; overflow: hidden; }
+
+  .banner { background: #002060; color: #FFFFFF; text-align: center; padding: 16px 20px 14px; }
+  .banner h1 { font-size: 18px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 6px; }
+  .banner p { font-size: 12px; font-weight: 400; opacity: 0.9; }
+
+  .meta-bar { background: #F0F0F0; border-bottom: 1.5px solid #BBBBBB; padding: 10px 20px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .meta-field { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #111; }
+  .meta-field label { font-weight: 800; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; }
+  .meta-field input { border: 1.5px solid #AAAAAA; border-radius: 4px; padding: 4px 8px; font-size: 13px; font-weight: 600; background: #FFFFFF; color: #111; }
+  .meta-field input:focus { outline: none; border-color: #002060; }
+  .sep { color: #AAAAAA; font-size: 16px; }
+
+  .body { padding: 0 0 18px; }
+  .section-bar { background: #002060; color: #FFFFFF; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; padding: 8px 20px; margin-top: 4px; }
+  .fields { padding: 12px 20px 4px; }
+  .field { margin-bottom: 12px; }
+  .field label { display: block; font-size: 11px; font-weight: 700; color: #555; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .field input[type="text"], .field textarea {
+    width: 100%; border: 1.5px solid #CCCCCC; border-radius: 6px; padding: 9px 12px; font-size: 14px; color: #111; background: #FFFFFF;
+  }
+  .field input[type="text"]:focus, .field textarea:focus { outline: none; border-color: #002060; }
+  .field textarea { resize: vertical; min-height: 60px; font-family: inherit; }
+
+  .checks { display: flex; gap: 18px; flex-wrap: wrap; padding: 4px 0 14px; }
+  .check-item { display: flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 600; color: #111; }
+  .check-item input[type="checkbox"] { width: 18px; height: 18px; accent-color: #002060; cursor: pointer; }
+
+  .confirma-box { margin: 16px 20px 4px; border: 1.5px solid #002060; border-radius: 8px; overflow: hidden; }
+  .confirma-title { background: #002060; color: #FFFFFF; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding: 7px 14px; }
+  .confirma-text { padding: 10px 14px; font-size: 12px; color: #444; line-height: 1.5; background: #F7F8FC; }
+
+  .actions { display: flex; gap: 12px; margin: 20px 20px 4px; padding-top: 14px; border-top: 1.5px solid #DDDDDD; }
+  .btn { flex: 1; padding: 12px 10px; border: 1.5px solid #002060; border-radius: 7px; font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: background 0.15s; }
+  .btn-limpiar { background: #FFFFFF; color: #002060; }
+  .btn-limpiar:hover { background: #F0F0F0; }
+  .btn-pdf { background: #002060; color: #FFFFFF; }
+  .btn-pdf:hover { background: #003080; }
+
+  .volver { display: block; text-align: center; padding: 14px 20px 20px; font-size: 12px; }
+  .volver a { color: #002060; text-decoration: none; font-weight: 600; }
+  .volver a:hover { text-decoration: underline; }
+
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: #111; color: #FFF; padding: 11px 22px; border-radius: 30px; font-size: 13px; font-weight: 600; box-shadow: 0 4px 16px rgba(0,0,0,0.25); transition: transform 0.3s ease; z-index: 999; white-space: nowrap; }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 480px) {
+    body { padding: 8px; }
+    .meta-bar { flex-direction: column; align-items: flex-start; }
+    .actions { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+<div class="card">
+
+  <!-- BANNER -->
+  <div class="banner">
+    <h1>Envío Interno de Documentos y Paquetes</h1>
+    <p>Lineamiento Corporativo de Identificación y Traslado.</p>
+  </div>
+
+  <!-- META BAR -->
+  <div class="meta-bar">
+    <div class="meta-field">
+      <label>Fecha:</label>
+      <input type="text" id="fecha" readonly style="min-width:140px;">
+    </div>
+    <span class="sep">|</span>
+    <div class="meta-field">
+      <label>No.:</label>
+      <input type="text" id="numero" placeholder="EI-001" style="min-width:90px;">
+    </div>
+  </div>
+
+  <div class="body">
+
+    <!-- DESTINATARIO -->
+    <div class="section-bar">Destinatario</div>
+    <div class="fields">
+      <div class="field"><label>Empresa</label><input type="text" id="dest-empresa"></div>
+      <div class="field"><label>Área / Departamento</label><input type="text" id="dest-area"></div>
+      <div class="field"><label>Nombre de quien recibe</label><input type="text" id="dest-nombre"></div>
+    </div>
+
+    <!-- DETALLE DEL ENVIO -->
+    <div class="section-bar">Detalle del envío</div>
+    <div class="fields">
+      <div class="checks">
+        <label class="check-item"><input type="checkbox" id="chk-documentos"> Documentos</label>
+        <label class="check-item"><input type="checkbox" id="chk-paquete"> Paquete</label>
+        <label class="check-item"><input type="checkbox" id="chk-confidencial"> Confidencial</label>
+        <label class="check-item"><input type="checkbox" id="chk-otro"> Otro</label>
+      </div>
+      <div class="field"><label>Descripción breve</label><textarea id="descripcion"></textarea></div>
+    </div>
+
+    <!-- REMITENTE -->
+    <div class="section-bar">Remitente</div>
+    <div class="fields">
+      <div class="field"><label>Empresa</label><input type="text" id="rem-empresa"></div>
+      <div class="field"><label>Área / Departamento</label><input type="text" id="rem-area"></div>
+      <div class="field"><label>Nombre</label><input type="text" id="rem-nombre"></div>
+      <div class="field"><label>Teléfono / Extensión</label><input type="text" id="rem-telefono"></div>
+    </div>
+
+    <!-- CONTROL DE RECEPCIÓN -->
+    <div class="section-bar">Control de recepción</div>
+    <div class="fields">
+      <div class="field"><label>Fecha de recepción</label><input type="text" id="fecha-recepcion"></div>
+      <div class="field"><label>Nombre de quien recibe</label><input type="text" id="recibe-nombre"></div>
+      <div class="field"><label>Firma</label><input type="text" id="firma"></div>
+      <div class="field"><label>Observaciones</label><textarea id="observaciones"></textarea></div>
+    </div>
+
+    <!-- CONFIRMACIÓN INMEDIATA -->
+    <div class="confirma-box">
+      <div class="confirma-title">Confirmación inmediata</div>
+      <div class="confirma-text">La persona que recibe deberá notificar al remitente, vía WhatsApp, correo o medio similar, adjuntando fotografía del formato y del apartado de recepción completado.</div>
+    </div>
+
+    <!-- ACCIONES -->
+    <div class="actions">
+      <button class="btn btn-limpiar" onclick="limpiarForm()">🗑 Limpiar</button>
+      <button class="btn btn-pdf" onclick="generarPDF()">📄 Generar PDF</button>
+    </div>
+
+    <div class="volver"><a href="index.html">← Volver al inicio</a></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // ── API CLOUD
+  const API_URL = 'https://script.google.com/macros/s/AKfycbxv3r6ZPfDV81Ah95UwMxLRtrcd_l1z_divHZgyytZz9oBufaQ7bFtNGRnvB9Pqw5wE/exec';
+  const BODEGA_KEY = 'EI';
+
+  async function apiGet(params) {
+    const qs = new URLSearchParams(params).toString();
+    const res = await fetch(`${API_URL}?${qs}`);
+    return res.json();
+  }
+  async function apiPost(data) {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(data)
+    });
+    return res.json();
+  }
+
+  // ── FECHA AUTOMÁTICA
+  const DIAS  = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  const hoy   = new Date();
+  document.getElementById('fecha').value =
+    `${DIAS[hoy.getDay()]} ${hoy.getDate()} de ${MESES[hoy.getMonth()]} del ${hoy.getFullYear()}`;
+
+  // ── CORRELATIVO CLOUD (automático al cargar, único tipo de documento)
+  function cargarCorrelativo() {
+    const campo = document.getElementById('numero');
+    campo.readOnly = true;
+    campo.value = 'Generando…';
+    apiGet({ action: 'siguienteNumero', bodega: BODEGA_KEY }).then(data => {
+      if (data && data.numero) {
+        campo.value = data.numero;
+        campo.readOnly = false;
+      } else {
+        campo.readOnly = false;
+        campo.value = BODEGA_KEY + '-';
+        campo.placeholder = BODEGA_KEY + '-001';
+        mostrarToast('⚠️ Sin conexión, escribe el número manualmente');
+      }
+    }).catch(() => {
+      campo.readOnly = false;
+      campo.value = BODEGA_KEY + '-';
+      campo.placeholder = BODEGA_KEY + '-001';
+      mostrarToast('⚠️ Sin conexión, escribe el número manualmente');
+    });
+  }
+  cargarCorrelativo();
+
+  // ── TOAST
+  function mostrarToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2800);
+  }
+
+  // ── LIMPIAR
+  function limpiarForm() {
+    if (!confirm('¿Limpiar todo el formulario?')) return;
+    ['dest-empresa','dest-area','dest-nombre','descripcion','rem-empresa','rem-area','rem-nombre','rem-telefono',
+     'fecha-recepcion','recibe-nombre','firma','observaciones'].forEach(id => document.getElementById(id).value = '');
+    ['chk-documentos','chk-paquete','chk-confidencial','chk-otro'].forEach(id => document.getElementById(id).checked = false);
+    cargarCorrelativo();
+  }
+
+  // ── RECOGER DATOS DEL FORM
+  function recogerDatos() {
+    return {
+      numero: document.getElementById('numero').value.trim(),
+      fecha: document.getElementById('fecha').value,
+      destEmpresa: document.getElementById('dest-empresa').value.trim(),
+      destArea: document.getElementById('dest-area').value.trim(),
+      destNombre: document.getElementById('dest-nombre').value.trim(),
+      tipoDocumentos: document.getElementById('chk-documentos').checked,
+      tipoPaquete: document.getElementById('chk-paquete').checked,
+      tipoConfidencial: document.getElementById('chk-confidencial').checked,
+      tipoOtro: document.getElementById('chk-otro').checked,
+      descripcion: document.getElementById('descripcion').value.trim(),
+      remEmpresa: document.getElementById('rem-empresa').value.trim(),
+      remArea: document.getElementById('rem-area').value.trim(),
+      remNombre: document.getElementById(�ɕ������ɔ���م�Ք��ɥ����(������ɕ�Q�������聑��յ��й���������	�%���ɕ��ѕ���������م�Ք��ɥ����(�����������I��������聑��յ��й���������	�%���������ɕ����������م�Ք��ɥ����(������ɕ����9���ɔ聑��յ��й���������	�%���ɕ���������ɔ���م�Ք��ɥ����(��������ɵ�聑��յ��й���������	�%�����ɵ����م�Ք��ɥ����(��������͕�م������聑��յ��й���������	�%�����͕�م�����̜��م�Ք��ɥ����(����������Ʌ��A��耜��(������������-���	=}-d(������(���((������R�R �9IH�A���UIH�8�1�9U	(���չ�ѥ�������Ʌ�A����(��������Ё�յ�ɼ�􁑽�յ��й���������	�%����յ�ɼ���م�Ք��ɥ����(����������յ�ɼ�����յ�ɼ����	=}-d��������쁵���Ʌ�Q���Р��j���<�%��ɕ̈́�����鵕ɼ�����������쁑��յ��й���������	�%����յ�ɼ�������̠��ɕ��ɸ��((��������Ё���ɕ������ѽ̠��(�����������������ɕ̈́�����������9���ɔ��쁵���Ʌ�Q���Р��j���<�
+�����ф���́��ѽ́�������ѥ��хɥ���쁑��յ��й���������	�%������е���ɕ̈́�������̠��ɕ��ɸ��(�����������ɕ���ɕ̈́�������ɕ�9���ɔ��쁵���Ʌ�Q���Р��j���<�
+�����ф���́��ѽ́����ɕ��ѕ�є��쁑��յ��й���������	�%���ɕ�����ɕ̈́�������̠��ɕ��ɸ��(�����������ѥ����յ��ѽ̀������ѥ��A��Օє�������ѥ��
+������������������ѥ��=�ɼ��쁵���Ʌ�Q���Р��j���<�M�������������ѥ��������������ɕ��ɸ��((�������թ��A����((�������A��С쁅�ѥ��耝�Յɑ���٥������������ѡ���ɕ̀����(����������ɕ̀���ɕ̹�����(������������Ʌ�Q���Р��r�Յɑ�����������Չ����(������􁕱͔��(������������Ʌ�Q���Р��j���<�9��͔��Ց���Յɑ�ȁ�������Չ����(�������(���������э������������Ʌ�Q���Р��j���<�M��������͸�����͔��Յɓ́�������Չ�����(���((���չ�ѥ������թ��A�����(��������Ё쁩�A���ݥ���ܹ������(��������Ё����􁹕܁��A�쁽ɥ��хѥ��耝����Ʌ�М��չ��耝�������ɵ��耝���ѕȜ����(��������Ё\�􁑽����ѕɹ�������M�锹���]��Ѡ���(��������Ё���� �􁑽����ѕɹ�������M�锹���!����Р��(��������Ё��ɝ��0���а���ɝ��H�����(��������Ё�����l����Ȱ���t�(������Ё�����((�����չ�ѥ���͕�ѥ��	�ȡѥѱ������ँ�(����������͕����
+���Ƞ��������(����������ɕ�С��ɝ��0��䰁\�����ɝ��0�����ɝ��H���������(����������͕���Р����ٕѥ������������쁑���͕����M�锠���쁑���͕�Q���
+���Ƞ��԰���԰���Ԥ�(����������ѕ�Сѥѱ��ѽU����
+�͔������ɝ��0���̰�䀬�����ȸԤ�(������䀬􁠀����(�����(�����չ�ѥ��������1�ne(label, value) {
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(90);
+      doc.text(label.toUpperCase() + ':', marginL, y);
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(0);
+      doc.text(String(value || '—'), marginL + 55, y);
+      doc.setDrawColor(200); doc.setLineWidth(0.2);
+      doc.line(marginL, y + 2.5, W - marginR, y + 2.5);
+      y += 9;
+    }
+    function checkPageBreak(needed) {
+      if (y + needed > pageH - 15) { doc.addPage(); y = 14; }
+    }
+
+    // Banner
+    doc.setFillColor(...navy);
+    doc.rect(0, 0, W, 26, 'F');
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(15); doc.setTextColor(255, 255, 255);
+    doc.text('ENVÍO INTERNO DE DOCUMENTOS Y PAQUETES', W / 2, 13, { align: 'center', maxWidth: W - 20 });
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
+    doc.text('Lineamiento Corporativo de Identificación y Traslado.', W / 2, 20, { align: 'center' });
+    y = 34;
+
+    // Meta
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(0);
+    doc.text(`Fecha: ${d.fecha}`, marginL, y);
+    doc.text(`No. ${d.numero}`, W - marginR, y, { align: 'right' });
+    y += 6;
+
+    // DESTINATARIO
+    sectionBar('Destinatario');
+    fieldLine('Empresa', d.destEmpresa);
+    fieldLine('Área / Departamento', d.destArea);
+    fieldLine('Nombre de quien recibe', d.destNombre);
+    y += 2;
+
+    // DETALLE DEL ENVIO
+    sectionBar('Detalle del envío');
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(0);
+    const tipos = [['Documentos', d.tipoDocumentos], ['Paquete', d.tipoPaquete], ['Confidencial', d.tipoConfidencial], ['Otro', d.tipoOtro]];
+    let cx = marginL;
+    tipos.forEach(([label, checked]) => {
+      doc.setDrawColor(0); doc.setLineWidth(0.4);
+      doc.rect(cx, y - 3.5, 4, 4);
+      if (checked) { doc.setFont('helvetica', 'bold'); doc.text('X', cx + 0.6, y - 0.5); }
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
+      doc.text(label, cx + 6, y);
+      cx += 6 + doc.getTextWidth(label) + 10;
+    });
+    y += 8;
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(90);
+    doc.text('DESCRIPCIÓN BREVE:', marginL, y);
+    y += 5;
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); doc.setTextColor(0);
+    const descLines = doc.splitTextToSize(d.descripcion || '—', W - marginL - marginR);
+    doc.text(descLines, marginL, y);
+    y += descLines.length * 5 + 4;
+    doc.setDrawColor(200); doc.setLineWidth(0.2);
+    doc.line(marginL, y - 2, W - marginR, y - 2);
+    y += 4;
+
+    checkPageBreak(50);
+
+    // REMITENTE
+    sectionBar('Remitente');
+    fieldLine('Empresa', d.remEmpresa);
+    fieldLine('Área / Departamento', d.remArea);
+    fieldLine('Nombre', d.remNombre);
+    fieldLine('Teléfono / Extensión', d.remTelefono);
+    y += 2;
+
+    checkPageBreak(60);
+
+    // CONTROL DE RECEPCIÓN
+    sectionBar('Control de recepción');
+    fieldLine('Fecha de recepción', d.fechaRecepcion);
+    fieldLine('Nombre de quien recibe', d.recibeNombre);
+    fieldLine('Firma', d.firma);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(90);
+    doc.text('OBSERVACIONES:', marginL, y);
+    y += 5;
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); doc.setTextColor(0);
+    const obsLines = doc.splitTextToSize(d.observaciones || '—', W - marginL - marginR);
+    doc.text(obsLines, marginL, y);
+    y += obsLines.length * 5 + 6;
+
+    checkPageBreak(30);
+
+    // CONFIRMACIÓN INMEDIATA
+    doc.setDrawColor(...navy); doc.setLineWidth(0.5);
+    const boxH = 20;
+    doc.rect(marginL, y, W - marginL - marginR, boxH);
+    doc.setFillColor(...navy);
+    doc.rect(marginL, y, W - marginL - marginR, 7, 'F');
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); doc.setTextColor(255, 255, 255);
+    doc.text('CONFIRMACIÓN INMEDIATA', marginL + 3, y + 5);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(60);
+    const confText = 'La persona que recibe deberá notificar al remitente, vía WhatsApp, correo o medio similar, adjuntando fotografía del formato y del apartado de recepción completado.';
+    doc.text(doc.splitTextToSize(confText, W - marginL - marginR - 6), marginL + 3, y + 12);
+
+    doc.save(`${d.numero || 'Envio'}.pdf`);
+  }
+</script>
+</body>
+</html>
