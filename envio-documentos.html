@@ -108,9 +108,36 @@
     <!-- REMITENTE -->
     <div class="section-bar">Remitente</div>
     <div class="fields">
-      <div class="field"><label>Empresa</label><input type="text" id="rem-empresa"></div>
-      <div class="field"><label>Área / Departamento</label><input type="text" id="rem-area"></div>
-      <div class="field"><label>Nombre</label><input type="text" id="rem-nombre"></div>
+      <div class="field">
+        <label>Empresa</label>
+        <select id="rem-empresa" onchange="onRemEmpresaChange()">
+          <option value="">— Seleccionar empresa —</option>
+          <option value="Interport Group / Control Logístico">Interport Group / Control Logístico</option>
+          <option value="Transportes ALOPSA">Transportes ALOPSA</option>
+          <option value="Comercializadora Pahame">Comercializadora Pahame</option>
+          <option value="Estrahu">Estrahu</option>
+          <option value="OTRO">Otra empresa (especificar)</option>
+        </select>
+      </div>
+      <div class="field" id="rem-empresa-extra" style="display:none;">
+        <label>Nombre de la empresa</label>
+        <input type="text" id="rem-empresa-nombre" placeholder="Ej. Nombre de la empresa">
+      </div>
+      <div class="field"><label>Área / Departamento</label><input type="text" id="rem-area" value="Control Logístico"></div>
+      <div class="field">
+        <label>Cargo</label>
+        <select id="rem-cargo" onchange="onRemCargoChange()">
+          <option value="">— Seleccionar cargo —</option>
+          <option value="ACL">AUXILIAR DE CONTROL LOGÍSTICO</option>
+          <option value="ASR">AUXILIAR DE SOPORTE DE REGISTROS</option>
+          <option value="AST">ASISTENTE DE CONTROL</option>
+          <option value="OTR">Otros</option>
+        </select>
+      </div>
+      <div class="field" id="rem-nombre-wrap-field" style="display:none;">
+        <label>Nombre</label>
+        <div id="rem-nombre-wrap"></div>
+      </div>
       <div class="field"><label>Teléfono / Extensión</label><input type="text" id="rem-telefono"></div>
     </div>
 
@@ -191,6 +218,48 @@
   }
   cargarCorrelativo();
 
+  // ── PERSONAL UNIFICADO DE CONTROL LOGÍSTICO (mismo listado que en ALOPSA/PAHAME/ESTRAHU)
+  const DESPACHA_NOMBRES = {
+    ACL: ['Misael Gómez','Lester Pérez','Marlin Ramírez','Anderson Castañeda','Lourdes Borja','Manuel Arias','Christofer García','Jhoel Guzmán','Gustavo Duarte'],
+    ASR: ['Leidi Chun','Keita Ruano'],
+    AST: ['Everth Leal','Lcda. Roxana Villeda'],
+  };
+
+  function onRemEmpresaChange() {
+    const val = document.getElementById('rem-empresa').value;
+    document.getElementById('rem-empresa-extra').style.display = (val === 'OTRO') ? 'block' : 'none';
+  }
+
+  function onRemCargoChange() {
+    const cargo = document.getElementById('rem-cargo').value;
+    const wrap  = document.getElementById('rem-nombre-wrap');
+    const wrapField = document.getElementById('rem-nombre-wrap-field');
+    wrap.innerHTML = '';
+    if (!cargo) { wrapField.style.display = 'none'; return; }
+    wrapField.style.display = 'block';
+    if (cargo === 'OTR') {
+      const inp = document.createElement('input');
+      inp.type = 'text'; inp.id = 'rem-nombre'; inp.placeholder = 'Nombre completo';
+      wrap.appendChild(inp);
+    } else {
+      const sel = document.createElement('select');
+      sel.id = 'rem-nombre';
+      sel.innerHTML = '<option value="">— Seleccionar nombre —</option>' +
+        DESPACHA_NOMBRES[cargo].map(n => `<option>${n}</option>`).join('');
+      wrap.appendChild(sel);
+    }
+  }
+
+  function remEmpresaVal() {
+    const sel = document.getElementById('rem-empresa').value;
+    if (sel === 'OTRO') return document.getElementById('rem-empresa-nombre').value.trim();
+    return sel;
+  }
+  function remNombreVal() {
+    const el = document.getElementById('rem-nombre');
+    return el ? el.value.trim() : '';
+  }
+
   // ── TOAST
   function mostrarToast(msg) {
     const t = document.getElementById('toast');
@@ -202,9 +271,16 @@
   // ── LIMPIAR
   function limpiarForm() {
     if (!confirm('¿Limpiar todo el formulario?')) return;
-    ['dest-empresa','dest-area','dest-nombre','descripcion','rem-empresa','rem-area','rem-nombre','rem-telefono',
-     'fecha-recepcion','recibe-nombre','firma','observaciones'].forEach(id => document.getElementById(id).value = '');
+    ['dest-empresa','dest-area','dest-nombre','descripcion','rem-telefono',
+     'fecha-recepcion','recibe-nombre','firma','observaciones'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
     ['chk-documentos','chk-paquete','chk-confidencial','chk-otro'].forEach(id => document.getElementById(id).checked = false);
+    document.getElementById('rem-area').value = 'Control Logístico';
+    document.getElementById('rem-empresa').value = '';
+    document.getElementById('rem-empresa-nombre').value = '';
+    document.getElementById('rem-empresa-extra').style.display = 'none';
+    document.getElementById('rem-cargo').value = '';
+    document.getElementById('rem-nombre-wrap').innerHTML = '';
+    document.getElementById('rem-nombre-wrap-field').style.display = 'none';
     cargarCorrelativo();
   }
 
@@ -221,9 +297,9 @@
       tipoConfidencial: document.getElementById('chk-confidencial').checked,
       tipoOtro: document.getElementById('chk-otro').checked,
       descripcion: document.getElementById('descripcion').value.trim(),
-      remEmpresa: document.getElementById('rem-empresa').value.trim(),
+      remEmpresa: remEmpresaVal(),
       remArea: document.getElementById('rem-area').value.trim(),
-      remNombre: document.getElementById('rem-nombre').value.trim(),
+      remNombre: remNombreVal(),
       remTelefono: document.getElementById('rem-telefono').value.trim(),
       fechaRecepcion: document.getElementById('fecha-recepcion').value.trim(),
       recibeNombre: document.getElementById('recibe-nombre').value.trim(),
