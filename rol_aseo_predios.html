@@ -1,0 +1,551 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Rol de ingreso, limpieza y almuerzo para Transportes ALOPSA, MQ y Portacontenedores - Interport">
+<meta name="color-scheme" content="light dark">
+<title>Rol de Aseo Predios</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EEF1F5;
+    --surface:#FFFFFF;
+    --surface-2:#F6F8FA;
+    --ink:#1A2233;
+    --muted:#5B6472;
+    --line:#D7DCE3;
+    --accent-day:#C97A1F;
+    --accent-day-tint:#FBEBD6;
+    --accent-night:#464AA0;
+    --accent-night-tint:#E7E7F6;
+    --accent-lunch:#2F7D4F;
+    --accent-lunch-tint:#E3F0E8;
+    --shadow: 0 1px 2px rgba(26,34,51,.06), 0 8px 24px -12px rgba(26,34,51,.18);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#11151E;
+      --surface:#181D28;
+      --surface-2:#1E2431;
+      --ink:#E8EBF1;
+      --muted:#98A2B3;
+      --line:#2B3140;
+      --accent-day:#E8A94A;
+      --accent-day-tint:#3A2E17;
+      --accent-night:#8B8FE8;
+      --accent-night-tint:#242653;
+      --accent-lunch:#5FBE85;
+      --accent-lunch-tint:#173226;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 12px 28px -14px rgba(0,0,0,.6);
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#11151E;
+    --surface:#181D28;
+    --surface-2:#1E2431;
+    --ink:#E8EBF1;
+    --muted:#98A2B3;
+    --line:#2B3140;
+    --accent-day:#E8A94A;
+    --accent-day-tint:#3A2E17;
+    --accent-night:#8B8FE8;
+    --accent-night-tint:#242653;
+    --accent-lunch:#5FBE85;
+    --accent-lunch-tint:#173226;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 12px 28px -14px rgba(0,0,0,.6);
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Public Sans', system-ui, sans-serif;
+    padding-inline:16px;
+    padding-block:28px 48px;
+    max-width:980px;
+    margin:0 auto;
+  }
+  h1,h2,h3{font-family:'Archivo', system-ui, sans-serif; text-wrap:balance; margin:0;}
+
+  header.page{
+    display:flex; flex-wrap:wrap; gap:12px 24px; align-items:flex-end; justify-content:space-between;
+    padding-bottom:18px; border-bottom:2px solid var(--ink); margin-bottom:20px;
+  }
+  .eyebrow{
+    font-family:'IBM Plex Mono', monospace; font-size:.72rem; letter-spacing:.12em; text-transform:uppercase;
+    color:var(--muted); margin:0 0 6px;
+  }
+  h1{font-size:clamp(1.5rem,4vw,2.1rem); font-weight:800; letter-spacing:-.01em;}
+  .subtitle{color:var(--muted); font-size:.92rem; margin-top:4px;}
+  .fecha-hoy{
+    font-family:'IBM Plex Mono',monospace; font-size:.85rem; color:var(--muted);
+    text-align:right;
+  }
+  .fecha-hoy strong{display:block; color:var(--ink); font-size:1rem; font-weight:600;}
+
+  nav.tabs{ display:flex; gap:8px; margin-bottom:22px; flex-wrap:wrap; }
+  nav.tabs button{
+    font-family:'Public Sans',sans-serif; font-weight:600; font-size:.88rem;
+    padding:9px 16px; border-radius:999px; border:1.5px solid var(--line);
+    background:var(--surface); color:var(--muted); cursor:pointer;
+  }
+  nav.tabs button[aria-selected="true"]{
+    background:var(--ink); color:var(--paper); border-color:var(--ink);
+  }
+  nav.tabs button:focus-visible{outline:2px solid var(--accent-day); outline-offset:2px;}
+
+  section[hidden]{display:none !important;}
+
+  .hero{
+    display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:22px;
+  }
+  @media (max-width:720px){ .hero{grid-template-columns:1fr;} }
+  .hero .tile{
+    background:var(--surface); border-radius:14px; padding:16px 18px; box-shadow:var(--shadow);
+    border-left:5px solid var(--accent-day);
+    display:flex; flex-direction:column; gap:6px;
+  }
+  .tile.ingreso{border-left-color:var(--accent-day);}
+  .tile.limpieza{border-left-color:var(--accent-night);}
+  .tile.almuerzo{border-left-color:var(--accent-lunch);}
+  .tile .k{
+    font-family:'IBM Plex Mono',monospace; font-size:.7rem; letter-spacing:.1em; text-transform:uppercase; color:var(--muted);
+    display:flex; align-items:center; gap:6px;
+  }
+  .tile .name{font-family:'Archivo',sans-serif; font-weight:700; font-size:1.15rem;}
+  .tile .meta{color:var(--muted); font-size:.82rem;}
+  .ingreso-lista{display:flex; flex-direction:column; gap:6px;}
+  .ingreso-lista .ingreso-item{font-size:.92rem;}
+  .ingreso-lista .ingreso-item .encargado{font-family:'Archivo',sans-serif; font-weight:700;}
+  .ingreso-lista .ingreso-item .sub{color:var(--muted); font-size:.78rem; font-weight:400; margin-top:0;}
+  table.dias .ingreso-item{margin-bottom:6px;}
+  table.dias .ingreso-item:last-child{margin-bottom:0;}
+  .badge-dot{width:8px;height:8px;border-radius:50%;display:inline-block;}
+  .tile.ingreso .badge-dot{background:var(--accent-day);}
+  .tile.limpieza .badge-dot{background:var(--accent-night);}
+  .tile.almuerzo .badge-dot{background:var(--accent-lunch);}
+
+  .legend{
+    display:flex; flex-wrap:wrap; gap:10px; margin-bottom:26px;
+  }
+  .legend .chip{
+    background:var(--surface-2); border:1px solid var(--line); border-radius:10px;
+    padding:8px 12px; font-size:.82rem; color:var(--muted); display:flex; gap:8px; align-items:center;
+  }
+  .legend .chip b{color:var(--ink); font-weight:600;}
+
+  .week{
+    background:var(--surface); border-radius:16px; border:1px solid var(--line);
+    margin-bottom:16px; overflow:hidden; box-shadow:var(--shadow);
+  }
+  .week.current{border-color:var(--accent-day); border-width:2px;}
+  .week-head{
+    display:flex; flex-wrap:wrap; justify-content:space-between; gap:8px 20px;
+    padding:14px 18px; background:var(--surface-2); border-bottom:1px solid var(--line);
+  }
+  .week-head .left{display:flex; align-items:baseline; gap:10px;}
+  .week-head .tag-current{
+    font-family:'IBM Plex Mono',monospace; font-size:.68rem; letter-spacing:.08em; text-transform:uppercase;
+    background:var(--accent-day); color:var(--surface); padding:3px 8px; border-radius:6px; font-weight:600;
+  }
+  .week-head h3{font-size:1rem;}
+
+  table.dias{width:100%; border-collapse:collapse; font-size:.88rem;}
+  table.dias th{
+    text-align:left; font-family:'IBM Plex Mono',monospace; font-size:.68rem; letter-spacing:.08em;
+    text-transform:uppercase; color:var(--muted); padding:10px 14px; border-bottom:1px solid var(--line);
+  }
+  table.dias td{padding:10px 14px; border-bottom:1px solid var(--line); vertical-align:middle;}
+  table.dias tr:last-child td{border-bottom:none;}
+  table.dias tr.today{background:var(--accent-day-tint);}
+  .dia-col{white-space:nowrap; font-weight:600;}
+  .encargado{font-weight:600;}
+  .sub{display:block; color:var(--muted); font-weight:400; font-size:.78rem; margin-top:2px;}
+  .scroll-x{overflow-x:auto;}
+
+  .obs{
+    display:flex; gap:10px; align-items:flex-start;
+    padding:14px 18px; background:var(--accent-night-tint); border-radius:14px;
+    font-size:.85rem; color:var(--muted); margin-bottom:16px; line-height:1.55;
+  }
+  .obs .obs-ico{flex:none; font-size:1.1rem;}
+  .obs b{color:var(--ink);}
+  .obs .turno-linea{display:block; font-size:1.05rem; margin-bottom:4px;}
+  .obs .turno-linea b{font-family:'Archivo',sans-serif; font-weight:700;}
+  .obs .obs-texto{display:block; margin-top:8px;}
+  .obs .bodegas{display:block; margin-top:6px; font-family:'IBM Plex Mono',monospace; font-size:.76rem;}
+
+  .callout{
+    background:var(--accent-day-tint); border:1px solid var(--accent-day);
+    border-radius:14px; padding:18px 20px; margin-top:12px;
+  }
+  .callout h3{font-size:.95rem; margin-bottom:10px;}
+  .callout ol{margin:0; padding-left:20px; color:var(--ink); font-size:.86rem; line-height:1.6;}
+  .callout ol li{margin-bottom:4px;}
+
+  footer.page{
+    margin-top:34px; padding-top:16px; border-top:1px solid var(--line);
+    color:var(--muted); font-size:.78rem; display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;
+  }
+</style>
+
+<header class="page">
+  <div>
+    <p class="eyebrow">Departamento de Predios · Control Logístico</p>
+    <h1>Rol de Ingreso, Limpieza y Almuerzo</h1>
+    <p class="subtitle">Transportes ALOPSA, MQ y Portacontenedores (Porta)</p>
+  </div>
+  <div class="fecha-hoy">
+    Hoy
+    <strong id="fecha-hoy-label">—</strong>
+  </div>
+</header>
+
+<nav class="tabs" role="tablist" aria-label="Área">
+  <button role="tab" id="tab-transportes" aria-selected="true" aria-controls="panel-transportes">Transportes (Predios)</button>
+  <button role="tab" id="tab-mq" aria-selected="false" aria-controls="panel-mq">MQ y Porta</button>
+</nav>
+
+<section id="panel-transportes" role="tabpanel" aria-labelledby="tab-transportes">
+
+  <div class="hero">
+    <div class="tile ingreso">
+      <span class="k"><span class="badge-dot"></span>Ingreso de hoy</span>
+      <div class="ingreso-lista" id="hoy-ingreso-lista"></div>
+    </div>
+    <div class="tile limpieza">
+      <span class="k"><span class="badge-dot"></span>Limpieza de hoy</span>
+      <span class="name" id="hoy-limpieza-nombre">—</span>
+      <span class="meta">Rol fijo semanal, 2 días por persona</span>
+    </div>
+    <div class="tile almuerzo">
+      <span class="k"><span class="badge-dot"></span>Almuerzo de hoy</span>
+      <span class="name" id="hoy-almuerzo-nombre">—</span>
+      <span class="meta" id="hoy-almuerzo-meta">12:00 pm – 2:00 pm</span>
+    </div>
+  </div>
+
+  <div class="legend">
+    <div class="chip"><b>3 fijos</b>&nbsp;— 2 días cada uno: Lourdes Borja, Anderson Castañeda, Gustavo Aucar</div>
+    <div class="chip">Sábados: <b>2 de los 3 llegan</b>&nbsp;(7:00 a.m. – 12:00 p.m.) y 1 descansa — el equipo coordina la rotación entre ellos</div>
+    <div class="chip"><b>Misael &amp; Keitha</b>&nbsp;no entran en la rotación de limpieza — siempre de apoyo</div>
+    <div class="chip">Turno noche&nbsp;<b>recorre 1 bodega</b>&nbsp;distinta de Predios cada noche</div>
+    <div class="chip">Martes: <b>Marlin Ramírez</b>&nbsp;(MQ/Porta) cubre solo la hora de almuerzo (12–2 pm), no el día completo</div>
+    <div class="chip"><b>Anderson</b>&nbsp;también apoya en MQ el medio día de los lunes, en lugar de Marlin</div>
+    <div class="chip">Apoyo a MQ hoy: <span id="apoyo-mq-texto">—</span></div>
+  </div>
+
+  <div class="week current">
+    <div class="week-head">
+      <div class="left"><h3>Semana tipo</h3><span class="tag-current">Se repite cada semana</span></div>
+    </div>
+    <div class="scroll-x">
+      <table class="dias" id="transporte-tabla">
+        <thead><tr><th>Día</th><th>Ingreso</th><th>Limpieza</th><th>Almuerzo (12–2 pm)</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="obs" id="obs-auxiliares"></div>
+</section>
+
+<section id="panel-mq" role="tabpanel" aria-labelledby="tab-mq" hidden>
+
+  <div class="hero">
+    <div class="tile ingreso">
+      <span class="k"><span class="badge-dot"></span>Ingreso de hoy (MQ)</span>
+      <div class="ingreso-lista" id="mq-hoy-ingreso-lista"></div>
+    </div>
+    <div class="tile limpieza">
+      <span class="k"><span class="badge-dot"></span>Limpieza de hoy (Porta)</span>
+      <span class="name" id="mq-hoy-limpieza">—</span>
+      <span class="meta">Rol fijo semanal (se repite igual cada semana)</span>
+    </div>
+    <div class="tile almuerzo">
+      <span class="k"><span class="badge-dot"></span>Cubre medio día hoy (MQ)</span>
+      <span class="name" id="mq-hoy-apoyo">—</span>
+      <span class="meta" id="mq-hoy-apoyo-meta">Quien está en sitio a la hora del almuerzo</span>
+    </div>
+  </div>
+
+  <div class="legend">
+    <div class="chip">Todos manejan un horario habitual de&nbsp;<b>7 am – 5 pm</b>&nbsp;— este calendario solo indica quién cubre el horario extendido hasta las 6 pm cada día</div>
+    <div class="chip"><b>Leydi</b>&nbsp;tiene su base en MQ todos los días</div>
+    <div class="chip"><b>Lester, Marlin y Cristhofer</b>&nbsp;rotan la limpieza en Porta, 2 días cada uno</div>
+    <div class="chip">El horario de&nbsp;<b>ingreso a MQ</b>&nbsp;varía por día — Lester se traslada de Porta a MQ cuando le toca</div>
+    <div class="chip">Quien está&nbsp;<b>hasta las 6 pm</b>&nbsp;cubre el medio día en MQ (Lun–Vie)</div>
+    <div class="chip"><b>Misael &amp; Keitha</b>&nbsp;(auxiliares de Predios) cubren Porta los días que Lester está en MQ</div>
+    <div class="chip"><b>Marlin</b>&nbsp;ya no se traslada a MQ por el momento — Anderson (Transportes) cubre su medio día ahí los lunes</div>
+    <div class="chip">El auxiliar de&nbsp;<b>turno día</b>&nbsp;(Misael Gómez o Keitha Ruano, según la semana) cubre MQ desde las 6:00 a.m. todos los días hasta que llegue Leydi — no se retira antes</div>
+  </div>
+
+  <div class="week current">
+    <div class="week-head">
+      <div class="left"><h3>Semana tipo</h3><span class="tag-current">Se repite cada semana</span></div>
+    </div>
+    <div class="scroll-x">
+      <table class="dias" id="mq-tabla">
+        <thead><tr><th>Día</th><th>Ingreso (MQ)</th><th>Limpieza (Porta)</th><th>Medio día (MQ)</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="obs" id="obs-auxiliares-mq"></div>
+</section>
+
+<footer class="page">
+  <span>Elaborado por Everth Leal — Control Logístico</span>
+  <span id="fecha-elaboracion"></span>
+</footer>
+
+<script>
+(function(){
+  // --- Datos fijos semanales de Transportes (Predios) ---
+  // Limpieza: 2 días por cada uno de los 3 fijos (Lun/Jue, Mar/Vie, Mié/Sáb).
+  // Almuerzo: cobertura propia de Transportes, totalmente independiente de MQ.
+  // Ingreso: horario individual por persona y por día (tomado de la rotación "Semana 2",
+  // que Everth pidió dejar fija/repetitiva cada semana en vez de rotar entre semanas).
+  // Sábado: ya no llegan los 3 — 2 llegan (7am–12pm) y 1 descansa. El equipo coordina entre
+  // ellos quién descansa cada semana (rotación interna, no la fija este calendario).
+  // Martes: Marlin Ramírez (MQ/Porta) cubre el almuerzo de Transportes en lugar de Anderson —
+  // a cambio, Anderson cubre el medio día en MQ los lunes (ver más abajo). No coincide con
+  // el día de Lourdes (miércoles).
+  var TRANSPORTE = [
+    {dia:'Lunes', ingreso:[
+        {persona:'Gustavo Aucar',      horario:'7:00 a.m. – 5:00 p.m.'},
+        {persona:'Anderson Castañeda', horario:'8:00 a.m. – 6:00 p.m.'},
+        {persona:'Lourdes Borja',      horario:'7:00 a.m. – 5:00 p.m.'}
+      ], limpieza:'Lourdes Borja', almuerzo:'Christopher'},
+    {dia:'Martes', ingreso:[
+        {persona:'Gustavo Aucar',      horario:'7:00 a.m. – 5:00 p.m.'},
+        {persona:'Anderson Castañeda', horario:'7:00 a.m. – 5:00 p.m.'},
+        {persona:'Lourdes Borja',      horario:'8:00 a.m. – 6:00 p.m.'}
+      ], limpieza:'Anderson Castañeda', almuerzo:'Marlin Ramírez'},
+    {dia:'Miércoles', ingreso:[
+        {persona:'Gustavo Aucar',      horario:'8:00 a.m. – 6:00 p.m.'},
+        {persona:'Anderson Castañeda', horario:'7:00 a.m. – 5:00 p.m.'},
+        {persona:'Lourdes Borja',      horario:'7:00 a.m. – 5:00 p.m.'}
+      ], limpieza:'Gustavo Aucar', almuerzo:'Lourdes'},
+    {dia:'Jueves', ingreso:[
+        {persona:'Gustavo Aucar',      horario:'7:00 a.m. – 5:00 p.m.'},
+        {persona:'Anderson Castañeda', horario:'8:00 a.m. – 6:00 p.m.'},
+        {persona:'Lourdes Borja',      horario:'7:00 a.m. – 5:00 p.m.'}
+      ], limpieza:'Lourdes Borja', almuerzo:'Gustavo'},
+    {dia:'Viernes', ingreso:[
+        {persona:'Gustavo Aucar',      horario:'8:00 a.m. – 6:00 p.m.'},
+        {persona:'Anderson Castañeda', horario:'7:00 a.m. – 5:00 p.m.'},
+        {persona:'Lourdes Borja',      horario:'7:00 a.m. – 5:00 p.m.'}
+      ], limpieza:'Anderson Castañeda', almuerzo:'Jhoel'},
+    {dia:'Sábado', ingreso:'Rotación interna del equipo — 2 de los 3 llegan (7:00 a.m. – 12:00 p.m.), 1 descansa',
+      limpieza:'Rotación interna del equipo', almuerzo:null}
+  ];
+
+  function ingresoCellHtml(ingreso){
+    if(Array.isArray(ingreso)){
+      return ingreso.map(function(p){
+        return '<span class="ingreso-item"><span class="encargado">' + p.persona + '</span>' +
+          '<span class="sub">' + p.horario + '</span></span>';
+      }).join('');
+    }
+    return '<span class="sub">' + ingreso + '</span>';
+  }
+  var MQ = [
+  {"dia": "Lunes", "ingreso": [
+      {"persona": "__AUX_DIA__", "horario": "6:00 a.m. – 7:00 a.m. — base en MQ hasta que llegue Leydi"},
+      {"persona": "Leydi", "horario": "7:00 a.m. – 5:00 p.m."}
+    ], "limpiezaPorta": "Lester Pérez", "medioDia": "Anderson Castañeda"},
+  {"dia": "Martes", "ingreso": [
+      {"persona": "__AUX_DIA__", "horario": "6:00 a.m. – 11:00 a.m. — base en MQ hasta que llegue Leydi"},
+      {"persona": "Leydi", "horario": "11:00 a.m. – 6:00 p.m."}
+    ], "limpiezaPorta": "Lester Pérez", "medioDia": "Leydi"},
+  {"dia": "Miércoles", "ingreso": [
+      {"persona": "__AUX_DIA__", "horario": "6:00 a.m. – 7:00 a.m. — base en MQ hasta que llegue Leydi"},
+      {"persona": "Leydi", "horario": "7:00 a.m. – 5:00 p.m."},
+      {"persona": "Lester Pérez", "horario": "8:00 a.m. – 6:00 p.m. (Porta)"}
+    ], "limpiezaPorta": "Marlin Ramírez", "medioDia": "Lester Pérez"},
+  {"dia": "Jueves", "ingreso": [
+      {"persona": "__AUX_DIA__", "horario": "6:00 a.m. – 7:00 a.m. — base en MQ hasta que llegue Leydi"},
+      {"persona": "Leydi", "horario": "7:00 a.m. – 5:00 p.m."},
+      {"persona": "Lester Pérez", "horario": "8:00 a.m. – 6:00 p.m. (Porta)"}
+    ], "limpiezaPorta": "Cristhofer García", "medioDia": "Lester Pérez"},
+  {"dia": "Viernes", "ingreso": [
+      {"persona": "__AUX_DIA__", "horario": "6:00 a.m. – 8:00 a.m. — base en MQ hasta que llegue Leydi"},
+      {"persona": "Leydi", "horario": "8:00 a.m. – 6:00 p.m."}
+    ], "limpiezaPorta": "Marlin Ramírez", "medioDia": "Leydi"},
+  {"dia": "Sábado", "ingreso": [
+      {"persona": "__AUX_DIA__", "horario": "6:00 a.m. – 7:00 a.m. — base en MQ hasta que llegue Leydi"},
+      {"persona": "Leydi", "horario": "7:00 a.m. – 12:00 p.m."}
+    ], "limpiezaPorta": "Cristhofer García", "medioDia": null}
+]
+;
+
+  function pad(n){ return String(n).padStart(2,'0'); }
+  var mesesLargos = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  var diasLargos = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+  var hoyDate = new Date();
+  function labelHoy(){
+    return diasLargos[hoyDate.getDay()] + ' ' + hoyDate.getDate() + ' de ' + mesesLargos[hoyDate.getMonth()] + ' ' + hoyDate.getFullYear();
+  }
+  document.getElementById('fecha-hoy-label').textContent = labelHoy();
+  document.getElementById('fecha-elaboracion').textContent = 'Actualizado ' + labelHoy();
+
+  // día de la semana capitalizado, tal como aparece en los datos ('Lunes', 'Martes', ...)
+  var diaHoyCap = diasLargos[hoyDate.getDay()].charAt(0).toUpperCase() + diasLargos[hoyDate.getDay()].slice(1);
+  var mqHoyRow = null;
+  MQ.forEach(function(r){ if(r.dia === diaHoyCap){ mqHoyRow = r; } });
+
+  // ---------- Semanas: helpers compartidos (domingo de la semana, ms por semana) ----------
+  function domingoDeLaSemana(d){
+    var r = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    r.setDate(r.getDate() - r.getDay());
+    return r;
+  }
+  var msPorSemana = 7 * 24 * 60 * 60 * 1000;
+
+  // ---------- Tabla de Transportes ----------
+  var tTbody = document.querySelector('#transporte-tabla tbody');
+  var hoyRow = null;
+  TRANSPORTE.forEach(function(row){
+    var tr = document.createElement('tr');
+    var esHoy = row.dia === diaHoyCap;
+    if(esHoy){ tr.className = 'today'; hoyRow = row; }
+    var almuerzoTxt = row.almuerzo
+      ? row.almuerzo
+      : '<span class="sub">Sin cobertura asignada</span>';
+    tr.innerHTML =
+      '<td class="dia-col">' + row.dia + '</td>' +
+      '<td>' + ingresoCellHtml(row.ingreso) + '</td>' +
+      '<td class="encargado">' + row.limpieza + '</td>' +
+      '<td>' + almuerzoTxt + '</td>';
+    tTbody.appendChild(tr);
+  });
+
+  if(hoyRow){
+    document.getElementById('hoy-ingreso-lista').innerHTML = ingresoCellHtml(hoyRow.ingreso);
+    document.getElementById('hoy-limpieza-nombre').textContent = hoyRow.limpieza;
+    document.getElementById('hoy-almuerzo-nombre').textContent = hoyRow.almuerzo || 'Sin cobertura';
+    document.getElementById('hoy-almuerzo-meta').textContent = hoyRow.almuerzo ? '12:00 pm – 2:00 pm' : 'Sin cobertura asignada';
+  } else {
+    document.getElementById('hoy-ingreso-lista').innerHTML = '<span class="sub">Domingo: sin asignación</span>';
+    document.getElementById('hoy-limpieza-nombre').textContent = 'Sin asignación (domingo)';
+    document.getElementById('hoy-almuerzo-nombre').textContent = '—';
+    document.getElementById('hoy-almuerzo-meta').textContent = 'Domingo: sin asignación';
+  }
+
+  // ---------- Auxiliares Misael / Keitha: turno día/noche vigente ----------
+  // Ancla: domingo 13-sep-2026, Misael de día / Keitha de noche esa semana. Cambian cada domingo.
+  var ANCLA = new Date(2026, 8, 13); // 13 septiembre 2026 (mes 0-indexado), domingo
+  var domingoActual = domingoDeLaSemana(hoyDate);
+  var semanasDesdeAncla = Math.round((domingoActual - ANCLA) / msPorSemana);
+  var esParPar = ((semanasDesdeAncla % 2) + 2) % 2 === 0; // true = misma paridad que semana ancla (Misael día)
+  var auxDia = esParPar ? 'Misael Gómez' : 'Keitha Ruano';
+  var auxNoche = esParPar ? 'Keitha Ruano' : 'Misael Gómez';
+
+  // Sustituye el marcador "__AUX_DIA__" (cada mañana, antes de que llegue Leydi a MQ)
+  // por el auxiliar de turno día vigente esta semana (Misael o Keitha, rotan).
+  MQ.forEach(function(row){
+    row.ingreso.forEach(function(p){
+      if(p.persona === '__AUX_DIA__'){ p.persona = auxDia; }
+    });
+  });
+
+  // Bloque de observación de los auxiliares de apoyo de Predios (Misael/Keitha).
+  // Son personal de apoyo de TODO Predios, no solo de Transportes, por eso el mismo
+  // bloque se muestra igual en las dos pestañas (Transportes y MQ).
+  function contenidoObsAuxiliares(){
+    return '<span class="turno-linea">Turno día: <b>' + auxDia + '</b> (6:00 a.m. – 4:00 p.m.)</span>' +
+      '<span class="turno-linea">Turno noche: <b>' + auxNoche + '</b> (6:00 p.m. – 6:00 a.m.)</span>' +
+      '<span class="obs-texto">Observación: ninguno de los dos entra en la rotación de limpieza de Transportes ni de Porta — siempre están de apoyo ' +
+      'para quien limpia ese día. Como tarea propia, deben mantener limpia y ordenada su bodega/área.</span>';
+  }
+  document.getElementById('obs-auxiliares').innerHTML =
+    '<span class="obs-ico">🔁</span><span>' + contenidoObsAuxiliares() + '</span>';
+
+  // Nota de cobertura de Porta: cuando a Lester le toca ir a MQ (miércoles/jueves), el
+  // auxiliar de turno día (Misael/Keitha) cubre el espacio que deja en la oficina de Porta.
+  function notaCoberturaPorta(){
+    if(!mqHoyRow){ return ''; }
+    var lesterEnMQ = mqHoyRow.ingreso.some(function(p){ return p.persona === 'Lester Pérez'; });
+    if(!lesterEnMQ){ return ''; }
+    return '<span class="obs-texto">Hoy <b>Lester Pérez</b> se trasladó a MQ, así que en Porta lo cubre <b>' + auxDia + '</b> (auxiliar de turno día) mientras tanto.</span>';
+  }
+  var obsMq = document.getElementById('obs-auxiliares-mq');
+  if(obsMq){
+    obsMq.innerHTML = '<span class="obs-ico">🔁</span><span>' + contenidoObsAuxiliares() + notaCoberturaPorta() + '</span>';
+  }
+
+  // Nota breve en la pestaña de Transportes: quién apoya a MQ hoy (sin entrar en detalle
+  // de calendario). Prioriza quien cubre el medio día (el apoyo más representativo del día);
+  // si ese es la propia Leydi, cae al ingreso (p. ej. el auxiliar que cubre antes de que llegue).
+  function apoyoMqHoyHtml(){
+    if(!mqHoyRow){ return 'Domingo — MQ sin cobertura'; }
+    var apoyo = (mqHoyRow.medioDia && mqHoyRow.medioDia !== 'Leydi') ? mqHoyRow.medioDia : null;
+    if(!apoyo){
+      mqHoyRow.ingreso.forEach(function(p){ if(p.persona !== 'Leydi'){ apoyo = p.persona; } });
+    }
+    return apoyo ? ('<b>' + apoyo + '</b> brinda apoyo hoy') : 'Leydi cubre MQ sola hoy';
+  }
+  var apoyoMqEl = document.getElementById('apoyo-mq-texto');
+  if(apoyoMqEl){ apoyoMqEl.innerHTML = apoyoMqHoyHtml(); }
+
+  // ---------- MQ / Porta ----------
+  var mqTbody = document.querySelector('#mq-tabla tbody');
+  var mqHoy = null;
+  MQ.forEach(function(row){
+    var tr = document.createElement('tr');
+    var esHoy = row.dia === diaHoyCap;
+    if(esHoy){ tr.className = 'today'; mqHoy = row; }
+    var medioDiaTxt = row.medioDia
+      ? row.medioDia
+      : '<span class="sub">Sin cobertura asignada</span>';
+    tr.innerHTML =
+      '<td class="dia-col">' + row.dia + '</td>' +
+      '<td>' + ingresoCellHtml(row.ingreso) + '</td>' +
+      '<td class="encargado">' + row.limpiezaPorta + '</td>' +
+      '<td>' + medioDiaTxt + '</td>';
+    mqTbody.appendChild(tr);
+  });
+
+  if(mqHoy){
+    document.getElementById('mq-hoy-limpieza').textContent = mqHoy.limpiezaPorta;
+    document.getElementById('mq-hoy-ingreso-lista').innerHTML = ingresoCellHtml(mqHoy.ingreso);
+    document.getElementById('mq-hoy-apoyo').textContent = mqHoy.medioDia || 'Sin cobertura hoy';
+    document.getElementById('mq-hoy-apoyo-meta').textContent = mqHoy.medioDia
+      ? 'Cubre el medio día en MQ'
+      : (mqHoy.dia === 'Sábado' ? 'Sábado: MQ solo cubre hasta las 12:00 pm' : 'Sin cobertura asignada');
+  } else {
+    document.getElementById('mq-hoy-limpieza').textContent = 'Sin dato (domingo)';
+    document.getElementById('mq-hoy-ingreso-lista').innerHTML = '<span class="sub">Domingo: sin asignación</span>';
+    document.getElementById('mq-hoy-apoyo').textContent = '—';
+    document.getElementById('mq-hoy-apoyo-meta').textContent = 'Domingo: sin dato';
+  }
+
+  // ---------- Tabs ----------
+  var tabTransportes = document.getElementById('tab-transportes');
+  var tabMq = document.getElementById('tab-mq');
+  var panelTransportes = document.getElementById('panel-transportes');
+  var panelMq = document.getElementById('panel-mq');
+  function activar(which){
+    var t = which === 'mq';
+    tabTransportes.setAttribute('aria-selected', String(!t));
+    tabMq.setAttribute('aria-selected', String(t));
+    panelTransportes.hidden = t;
+    panelMq.hidden = !t;
+    try{ localStorage.setItem('rolAseoTab', which); }catch(e){}
+  }
+  tabTransportes.addEventListener('click', function(){ activar('transportes'); });
+  tabMq.addEventListener('click', function(){ activar('mq'); });
+  try{
+    var saved = localStorage.getItem('rolAseoTab');
+    if(saved === 'mq') activar('mq');
+  }catch(e){}
+})();
+</script>
+
+</html>
