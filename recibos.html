@@ -153,7 +153,6 @@
     </div>
 
     <div class="volver"><a href="index.html">← Volver al inicio</a></div>
-    <div class="reg-link"><a href="registro-recibos.html">Ver registro de recibos</a></div>
   </div>
 </div>
 
@@ -164,8 +163,8 @@
   const FIRMA_NOMBRE = 'David Alonzo';
   const FIRMA_CARGO = 'Supervisor de Control Logístico';
 
-  // ── API CLOUD (recibos) — completar con la URL del Apps Script publicado
-  const API_URL = '';
+  // ── API CLOUD (recibos)
+  const API_URL = 'https://script.google.com/macros/s/AKfycbz7efcnTQFG22nRI3uXcaH-G5YrAcIIpJm6GdhGHeh1x6ZLZ9q4PKWRvTkRE9kUs0A8/exec';
 
   async function apiGet(params) {
     if (!API_URL) return null;
@@ -293,15 +292,10 @@
     if (d.filas.length === 0) { mostrarToast('⚠️ Agrega al menos un renglón al detalle'); return; }
 
     dibujarPDF(d);
+    mostrarToast('✅ PDF generado');
 
-    // Guarda en la nube (registro privado) y respaldo local del correlativo
-    apiPost(Object.assign({ action: 'guardarRecibo' }, d)).then(res => {
-      if (res && res.ok) {
-        mostrarToast('✅ PDF generado y guardado en el registro');
-      } else {
-        mostrarToast('✅ PDF generado — ⚠️ no se pudo guardar en el registro (revisa conexión)');
-      }
-    });
+    // Solo se guarda el número usado, para que el correlativo en la nube avance (no se guarda el detalle del recibo)
+    apiPost({ action: 'guardarRecibo', numero: d.numero });
     const n = parseInt(numero, 10);
     if (!isNaN(n)) localStorage.setItem(CORRELATIVO_KEY, n);
   }
