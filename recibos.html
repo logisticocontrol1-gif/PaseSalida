@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Recibos - Control Logístico</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #EEEEEE; color: #111; min-height: 100vh; padding: 16px; }
+  .card { background: #FFFFFF; border: 1.5px solid #BBBBBB; border-radius: 8px; max-width: 680px; margin: 0 auto; overflow: hidden; }
+
+  .banner { background: #002060; color: #FFFFFF; text-align: center; padding: 16px 20px 14px; }
+  .banner h1 { font-size: 18px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 6px; }
+  .banner p { font-size: 12px; font-weight: 400; opacity: 0.9; }
+
+  .meta-bar { background: #F0F0F0; border-bottom: 1.5px solid #BBBBBB; padding: 10px 20px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .meta-field { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #111; }
+  .meta-field label { font-weight: 800; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; }
+  .meta-field input { border: 1.5px solid #AAAAAA; border-radius: 4px; padding: 4px 8px; font-size: 13px; font-weight: 600; background: #FFFFFF; color: #111; }
+  .meta-field input:focus { outline: none; border-color: #002060; }
+  .sep { color: #AAAAAA; font-size: 16px; }
+
+  .body { padding: 0 0 18px; }
+  .section-bar { background: #002060; color: #FFFFFF; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; padding: 8px 20px; margin-top: 4px; }
+  .fields { padding: 12px 20px 4px; }
+  .field { margin-bottom: 12px; }
+  .field label { display: block; font-size: 11px; font-weight: 700; color: #555; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .field input[type="text"], .field input[type="number"], .field textarea, .field select {
+    width: 100%; border: 1.5px solid #CCCCCC; border-radius: 6px; padding: 9px 12px; font-size: 14px; color: #111; background: #FFFFFF;
+  }
+  .field input:focus, .field textarea:focus, .field select:focus { outline: none; border-color: #002060; }
+  .field textarea { resize: vertical; min-height: 44px; font-family: inherit; }
+  .field .hint { font-size: 11px; color: #888; margin-top: 4px; font-weight: 400; text-transform: none; letter-spacing: 0; }
+
+  .row2 { display: flex; gap: 12px; }
+  .row2 .field { flex: 1; }
+
+  table.detalle { width: 100%; border-collapse: collapse; margin-top: 4px; }
+  table.detalle th { background: #F7C9B4; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.4px; color: #111; padding: 7px 6px; border: 1px solid #DDDDDD; text-align: left; }
+  table.detalle td { border: 1px solid #DDDDDD; padding: 2px; }
+  table.detalle td input { width: 100%; border: none; padding: 7px 6px; font-size: 13px; color: #111; background: transparent; }
+  table.detalle td input:focus { outline: 2px solid #002060; outline-offset: -2px; }
+  table.detalle td.cant input, table.detalle td.precio input { text-align: right; }
+  .add-row { background: none; border: none; color: #002060; font-size: 12px; font-weight: 700; cursor: pointer; padding: 8px 2px; }
+  .add-row:hover { text-decoration: underline; }
+
+  .total-line { display: flex; justify-content: flex-end; align-items: center; gap: 10px; padding: 10px 2px 2px; font-size: 14px; }
+  .total-line .lbl { font-weight: 800; background: #F7C9B4; padding: 6px 14px; border-radius: 4px; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px; }
+  .total-line .val { font-weight: 800; font-size: 16px; }
+
+  .checks { display: flex; gap: 18px; flex-wrap: wrap; padding: 4px 0 14px; }
+  .check-item { display: flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 600; color: #111; }
+  .check-item input[type="checkbox"] { width: 18px; height: 18px; accent-color: #002060; cursor: pointer; }
+
+  .actions { display: flex; gap: 12px; margin: 20px 20px 4px; padding-top: 14px; border-top: 1.5px solid #DDDDDD; }
+  .btn { flex: 1; padding: 12px 10px; border: 1.5px solid #002060; border-radius: 7px; font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: background 0.15s; }
+  .btn-limpiar { background: #FFFFFF; color: #002060; }
+  .btn-limpiar:hover { background: #F0F0F0; }
+  .btn-pdf { background: #002060; color: #FFFFFF; }
+  .btn-pdf:hover { background: #003080; }
+
+  .volver { display: block; text-align: center; padding: 14px 20px 20px; font-size: 12px; }
+  .volver a { color: #002060; text-decoration: none; font-weight: 600; }
+  .volver a:hover { text-decoration: underline; }
+
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: #111; color: #FFF; padding: 11px 22px; border-radius: 30px; font-size: 13px; font-weight: 600; box-shadow: 0 4px 16px rgba(0,0,0,0.25); transition: transform 0.3s ease; z-index: 999; white-space: nowrap; }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 480px) {
+    body { padding: 8px; }
+    .meta-bar { flex-direction: column; align-items: flex-start; }
+    .row2 { flex-direction: column; gap: 0; }
+    .actions { flex-direction: column; }
+    table.detalle th:nth-child(1), table.detalle td:nth-child(1) { font-size: 11px; }
+  }
+</style>
+</head>
+<body>
+<div class="card">
+
+  <!-- BANNER -->
+  <div class="banner">
+    <h1>Recibo de Pago</h1>
+    <p>Control Logístico — Interport Group</p>
+  </div>
+
+  <!-- META BAR -->
+  <div class="meta-bar">
+    <div class="meta-field">
+      <label>Fecha:</label>
+      <input type="text" id="fecha" style="min-width:110px;">
+    </div>
+    <span class="sep">|</span>
+    <div class="meta-field">
+      <label>N°:</label>
+      <input type="text" id="numero" placeholder="72" style="min-width:60px;">
+    </div>
+  </div>
+
+  <div class="body">
+
+    <!-- RECIBI DE -->
+    <div class="section-bar">Recibí de</div>
+    <div class="fields">
+      <div class="field"><label>Empresa / Persona</label><input type="text" id="recibi-de" placeholder="Ej. Caribe Gru, S.A."></div>
+      <div class="field"><label>Dirección</label><input type="text" id="direccion" value="CIUDAD"></div>
+    </div>
+
+    <!-- DETALLE -->
+    <div class="section-bar">Detalle</div>
+    <div class="fields">
+      <table class="detalle">
+        <thead>
+          <tr><th style="width:55%;">Descripción</th><th style="width:20%;">Cantidad</th><th style="width:25%;">Precio</th></tr>
+        </thead>
+        <tbody id="detalle-tbody"></tbody>
+      </table>
+      <button type="button" class="add-row" onclick="agregarFila()">+ Agregar fila</button>
+
+      <div class="total-line">
+        <span class="lbl">Total</span>
+        <span class="val" id="total-val">Q0.00</span>
+      </div>
+    </div>
+
+    <!-- CONCEPTO -->
+    <div class="section-bar">Concepto (resumen para el total)</div>
+    <div class="fields">
+      <div class="field"><label>Descripción breve</label><input type="text" id="concepto" placeholder="Ej. Atención por visita corporativa área norte"></div>
+    </div>
+
+    <!-- FIRMA -->
+    <div class="section-bar">Firma</div>
+    <div class="fields">
+      <div class="row2">
+        <div class="field">
+          <label>Nombre de quien firma</label>
+          <select id="firma-nombre-select" onchange="onFirmaNombreChange()">
+            <option value="">— Seleccionar nombre —</option>
+          </select>
+        </div>
+      </div>
+      <div class="field" id="firma-nombre-otro-field" style="display:none;">
+        <label>Nombre (especificar)</label>
+        <input type="text" id="firma-nombre-otro" placeholder="Nombre completo">
+      </div>
+      <div class="field"><label>Cargo</label><input type="text" id="firma-cargo" placeholder="Ej. Supervisor de Control Logístico"></div>
+    </div>
+
+    <!-- ACCIONES -->
+    <div class="actions">
+      <button class="btn btn-limpiar" onclick="limpiarForm()">🗑 Limpiar</button>
+      <button class="btn btn-pdf" onclick="generarPDF()">📄 Generar PDF</button>
+    </div>
+
+    <div class="volver"><a href="index.html">← Volver al inicio</a></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // ── PERSONAL UNIFICADO DE CONTROL LOGÍSTICO (mismo listado usado en ALOPSA/PAHAME/ESTRAHU/Envío Interno)
+  const DESPACHA_NOMBRES = {
+    ACL: ['Misael Gómez','Lester Pérez','Marlin Ramírez','Anderson Castañeda','Lourdes Borja','Manuel Arias','Christofer García','Jhoel Guzmán','Gustavo Duarte'],
+    ASR: ['Leidi Chun','Keita Ruano'],
+    AST: ['Everth Leal','Lcda. Roxana Villeda'],
+  };
+  const TODOS_LOS_NOMBRES = [].concat(DESPACHA_NOMBRES.ACL, DESPACHA_NOMBRES.ASR, DESPACHA_NOMBRES.AST);
+
+  function poblarSelectNombres() {
+    const sel = document.getElementById('firma-nombre-select');
+    TODOS_LOS_NOMBRES.forEach(n => {
+      const opt = document.createElement('option');
+      opt.value = n; opt.textContent = n;
+      sel.appendChild(opt);
+    });
+    const optOtro = document.createElement('option');
+    optOtro.value = 'OTRO'; optOtro.textContent = 'Otro (especificar)';
+    sel.appendChild(optOtro);
+  }
+  function onFirmaNombreChange() {
+    const val = document.getElementById('firma-nombre-select').value;
+    document.getElementById('firma-nombre-otro-field').style.display = (val === 'OTRO') ? 'block' : 'none';
+  }
+  function firmaNombreVal() {
+    const sel = document.getElementById('firma-nombre-select').value;
+    if (sel === 'OTRO') return document.getElementById('firma-nombre-otro').value.trim();
+    return sel;
+  }
+
+  // ── FECHA AUTOMÁTICA (dd/mm/aaaa, igual al formato original del recibo)
+  function pad(n) { return String(n).padStart(2, '0'); }
+  function fechaHoyStr() {
+    const hoy = new Date();
+    return `${pad(hoy.getDate())}/${pad(hoy.getMonth() + 1)}/${hoy.getFullYear()}`;
+  }
+  document.getElementById('fecha').value = fechaHoyStr();
+
+  // ── CORRELATIVO LOCAL (el registro maestro sigue siendo el Excel "Registro"; esto solo sugiere el siguiente número)
+  const CORRELATIVO_KEY = 'recibosUltimoNumero';
+  function cargarCorrelativo() {
+    const guardado = parseInt(localStorage.getItem(CORRELATIVO_KEY), 10);
+    const siguiente = (!isNaN(guardado) && guardado > 0) ? guardado + 1 : 72;
+    document.getElementById('numero').value = siguiente;
+  }
+  cargarCorrelativo();
+
+  // ── TABLA DE DETALLE (8 filas, igual al formato original; se pueden agregar más)
+  function nuevaFila() {
+    const tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td><input type="text" class="desc"></td>' +
+      '<td class="cant"><input type="text" class="cant-input"></td>' +
+      '<td class="precio"><input type="text" class="precio-input" oninput="calcularTotal()"></td>';
+    return tr;
+  }
+  function agregarFila() {
+    document.getElementById('detalle-tbody').appendChild(nuevaFila());
+  }
+  function inicializarFilas(n) {
+    const tbody = document.getElementById('detalle-tbody');
+    tbody.innerHTML = '';
+    for (let i = 0; i < n; i++) tbody.appendChild(nuevaFila());
+  }
+  inicializarFilas(8);
+
+  function parseMoneda(v) {
+    if (!v) return 0;
+    const limpio = String(v).replace(/[Qq\s,]/g, '');
+    const n = parseFloat(limpio);
+    return isNaN(n) ? 0 : n;
+  }
+  function calcularTotal() {
+    const precios = document.querySelectorAll('.precio-input');
+    let total = 0;
+    precios.forEach(p => { total += parseMoneda(p.value); });
+    document.getElementById('total-val').textContent = 'Q' + total.toFixed(2);
+    return total;
+  }
+
+  // ── TOAST
+  function mostrarToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2800);
+  }
+
+  // ── LIMPIAR
+  function limpiarForm() {
+    if (!confirm('¿Limpiar todo el formulario?')) return;
+    document.getElementById('recibi-de').value = '';
+    document.getElementById('direccion').value = 'CIUDAD';
+    document.getElementById('concepto').value = '';
+    document.getElementById('firma-nombre-select').value = '';
+    document.getElementById('firma-nombre-otro').value = '';
+    document.getElementById('firma-nombre-otro-field').style.display = 'none';
+    document.getElementById('firma-cargo').value = '';
+    inicializarFilas(8);
+    calcularTotal();
+    document.getElementById('fecha').value = fechaHoyStr();
+    cargarCorrelativo();
+  }
+
+  // ── RECOGER DATOS
+  function recogerDatos() {
+    const filas = [];
+    document.querySelectorAll('#detalle-tbody tr').forEach(tr => {
+      const desc = tr.querySelector('.desc').value.trim();
+      const cant = tr.querySelector('.cant-input').value.trim();
+      const precio = tr.querySelector('.precio-input').value.trim();
+      if (desc || cant || precio) filas.push({ desc, cant, precio });
+    });
+    return {
+      numero: document.getElementById('numero').value.trim(),
+      fecha: document.getElementById('fecha').value.trim(),
+      recibiDe: document.getElementById('recibi-de').value.trim(),
+      direccion: document.getElementById('direccion').value.trim(),
+      filas: filas,
+      total: calcularTotal(),
+      concepto: document.getElementById('concepto').value.trim(),
+      firmaNombre: firmaNombreVal(),
+      firmaCargo: document.getElementById('firma-cargo').value.trim()
+    };
+  }
+
+  // ── GENERAR PDF (recreación fiel del formato físico "R E C I B O")
+  function generarPDF() {
+    const numero = document.getElementById('numero').value.trim();
+    if (!numero) { mostrarToast('⚠️ Ingresa el número de recibo'); document.getElementById('numero').focus(); return; }
+
+    const d = recogerDatos();
+    if (!d.recibiDe) { mostrarToast('⚠️ Ingresa de quién se recibió el pago'); document.getElementById('recibi-de').focus(); return; }
+    if (d.filas.length === 0) { mostrarToast('⚠️ Agrega al menos un renglón al detalle'); return; }
+    if (!d.firmaNombre) { mostrarToast('⚠️ Selecciona o escribe el nombre de quien firma'); return; }
+
+    dibujarPDF(d);
+
+    // Guarda el correlativo usado para sugerir el siguiente la próxima vez
+    const n = parseInt(numero, 10);
+    if (!isNaN(n)) localStorage.setItem(CORRELATIVO_KEY, n);
+
+    mostrarToast('✅ PDF generado — recuerda anotar este recibo en la hoja "Registro"');
+  }
+
+  function dibujarPDF(d) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter' });
+    const W = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+    const marginL = 14, marginR = 14;
+    const peach = [247, 201, 180];
+    let y;
+
+    // Título "R E C I B O"
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(22); doc.setTextColor(0);
+    doc.text('R E C I B O', W - marginR, 24, { align: 'right' });
+
+    // N°
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(13);
+    doc.text('N° ' + (d.numero || '—'), W - marginR, 33, { align: 'right' });
+
+    // Barra "RECIBI DE:"
+    y = 44;
+    doc.setFillColor(...peach);
+    doc.rect(marginL, y, W - marginL - marginR, 9, 'F');
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(0);
+    doc.text('RECIBI DE:', marginL + 3, y + 6);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(11);
+    doc.text(d.recibiDe.toUpperCase(), marginL + 42, y + 6);
+
+    // Fecha (debajo de la barra, alineada a la derecha) y Dirección (izquierda)
+    y += 9;
+    doc.setDrawColor(0); doc.setLineWidth(0.3);
+    doc.line(W - marginR - 35, y + 5, W - marginR, y + 5);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
+    doc.text(d.fecha || '—', W - marginR, y + 9, { align: 'right' });
+    doc.setFontSize(10.5);
+    doc.text('Dirección: ' + (d.direccion || '—'), marginL, y + 9);
+
+    // Tabla de detalle
+    y += 17;
+    const colDescW = (W - marginL - marginR) * 0.55;
+    const colCantW = (W - marginL - marginR) * 0.20;
+    const colPrecioW = (W - marginL - marginR) * 0.25;
+    const rowH = 8;
+
+    doc.setFillColor(...peach);
+    doc.rect(marginL, y, colDescW + colCantW + colPrecioW, 7, 'F');
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(0);
+    doc.text('DESCRIPCIÓN', marginL + 2, y + 4.7);
+    doc.text('CANTIDAD', marginL + colDescW + colCantW / 2, y + 4.7, { align: 'center' });
+    doc.text('PRECIO', marginL + colDescW + colCantW + colPrecioW - 2, y + 4.7, { align: 'right' });
+    y += 7;
+
+    const totalFilas = Math.max(d.filas.length, 8);
+    doc.setDrawColor(150); doc.setLineWidth(0.2);
+    for (let i = 0; i < totalFilas; i++) {
+      const fila = d.filas[i] || { desc: '', cant: '', precio: '' };
+      doc.rect(marginL, y, colDescW, rowH);
+      doc.rect(marginL + colDescW, y, colCantW, rowH);
+      doc.rect(marginL + colDescW + colCantW, y, colPrecioW, rowH);
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(0);
+      if (fila.desc) doc.text(fila.desc.toUpperCase(), marginL + 2, y + 5.3, { maxWidth: colDescW - 4 });
+      if (fila.cant) doc.text(String(fila.cant), marginL + colDescW + colCantW / 2, y + 5.3, { align: 'center' });
+      if (fila.precio) doc.text('Q' + parseMoneda(fila.precio).toFixed(2), marginL + colDescW + colCantW + colPrecioW - 2, y + 5.3, { align: 'right' });
+      y += rowH;
+    }
+
+    // Bloque inferior (concepto + total) anclado cerca del pie de página
+    const bottomY = pageH - 68;
+    const conceptoW = (W - marginL - marginR) * 0.62;
+    const totalLblW = (W - marginL - marginR) * 0.18;
+    doc.setDrawColor(0); doc.setLineWidth(0.4);
+    doc.rect(marginL, bottomY, conceptoW, 10);
+    doc.setFillColor(...peach);
+    doc.rect(marginL + conceptoW, bottomY, totalLblW, 10, 'F');
+    doc.rect(marginL + conceptoW, bottomY, totalLblW, 10);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(0);
+    doc.text((d.concepto || '—').toUpperCase(), marginL + 3, bottomY + 6.5, { maxWidth: conceptoW - 6 });
+    doc.text('TOTAL', marginL + conceptoW + totalLblW / 2, bottomY + 6.5, { align: 'center' });
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(12);
+    doc.text('Q.' + d.total.toFixed(2), marginL + conceptoW + totalLblW + 4, bottomY + 7);
+
+    // Firma
+    const firmaY = bottomY + 32;
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(11);
+    doc.text('(F) ________________________________', W / 2, firmaY, { align: 'center' });
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(10.5);
+    doc.text(d.firmaNombre.toUpperCase(), W / 2, firmaY + 6, { align: 'center' });
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5);
+    doc.text((d.firmaCargo || '').toUpperCase(), W / 2, firmaY + 11, { align: 'center' });
+
+    // Franja inferior decorativa
+    doc.setFillColor(...peach);
+    doc.rect(0, pageH - 10, W, 10, 'F');
+
+    doc.save(`Recibo ${d.numero || ''} - ${d.recibiDe || 'Recibo'}.pdf`);
+  }
+
+  poblarSelectNombres();
+  calcularTotal();
+</script>
+</body>
+</html>
