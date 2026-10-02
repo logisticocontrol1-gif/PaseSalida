@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Registro de Recibos</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #EEEEEE;
+    color: #111;
+    min-height: 100vh;
+    padding: 24px;
+  }
+  .wrap { max-width: 980px; margin: 0 auto; }
+  h1 {
+    text-align: center;
+    font-size: 18px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  p.sub {
+    text-align: center;
+    color: #666;
+    font-size: 13px;
+    margin-bottom: 24px;
+  }
+  a.volver {
+    display: inline-block;
+    margin-bottom: 16px;
+    font-size: 12px;
+    color: #555;
+    text-decoration: none;
+    border: 1.5px solid #BBBBBB;
+    border-radius: 6px;
+    padding: 6px 12px;
+    background: #FFFFFF;
+  }
+  a.volver:hover { border-color: #888; }
+
+  #gate {
+    position: fixed; inset: 0; background: rgba(20,20,20,0.85);
+    display: flex; align-items: center; justify-content: center; z-index: 999;
+  }
+  .gate-box {
+    background: #FFFFFF; border-radius: 10px; padding: 32px 28px;
+    width: 100%; max-width: 320px; text-align: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  }
+  .gate-box h2 { font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+  .gate-box p { font-size: 12px; color: #777; margin-bottom: 16px; }
+  .gate-box input {
+    width: 100%; padding: 10px 12px; font-size: 14px;
+    border: 1.5px solid #AAAAAA; border-radius: 6px; margin-bottom: 12px; text-align: center;
+  }
+  .gate-box button {
+    width: 100%; padding: 10px; font-size: 13px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.5px; background: #111; color: #FFF; border: none; border-radius: 6px; cursor: pointer;
+  }
+  .gate-box button:hover { background: #333; }
+  .gate-err { color: #C0392B; font-size: 12px; margin-top: 8px; min-height: 16px; }
+
+  #contenido { display: none; }
+
+  .toolbar {
+    display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 14px;
+  }
+  .toolbar input[type="text"] {
+    flex: 1; min-width: 180px; padding: 8px 12px; font-size: 13px;
+    border: 1.5px solid #AAAAAA; border-radius: 6px; background: #FFF;
+  }
+  .btn {
+    border: 1.5px solid #111; background: #111; color: #FFF; border-radius: 6px;
+    padding: 8px 14px; font-size: 12px; font-weight: 700; letter-spacing: 0.3px;
+    cursor: pointer; white-space: nowrap;
+  }
+  .btn.secondary { background: #FFF; color: #111; }
+  .btn:hover { opacity: 0.85; }
+
+  .table-wrap {
+    background: #FFFFFF; border: 1.5px solid #BBBBBB; border-radius: 10px;
+    overflow: auto; max-height: 65vh;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  thead th {
+    position: sticky; top: 0; background: #F4F4F4; text-align: left;
+    padding: 10px 12px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.4px;
+    color: #666; border-bottom: 1.5px solid #DDD; white-space: nowrap;
+  }
+  tbody td {
+    padding: 9px 12px; border-bottom: 1px solid #EEE; white-space: nowrap; color: #222;
+  }
+  tbody tr:hover { background: #FAFAFA; }
+  .empty-msg, .loading-msg {
+    text-align: center; padding: 40px 10px; color: #999; font-size: 13px;
+  }
+  .count-badge {
+    font-size: 11px; color: #777; margin-bottom: 10px;
+  }
+  .no-api {
+    background: #FFF4E5; border: 1.5px solid #E8A94A; border-radius: 8px;
+    padding: 14px 16px; font-size: 13px; color: #6b4a16; margin-bottom: 16px; line-height: 1.5;
+  }
+  footer {
+    text-align: center; margin-top: 24px; font-size: 11px; color: #AAAAAA;
+  }
+</style>
+</head>
+<body>
+
+  <div id="gate">
+    <div class="gate-box">
+      <h2>Acceso restringido</h2>
+      <p>Solo Everth. Ingresa el código de acceso.</p>
+      <input type="password" id="gate-code" placeholder="Código de acceso" autocomplete="off">
+      <button onclick="verificarCodigo()">Entrar</button>
+      <div class="gate-err" id="gate-err"></div>
+    </div>
+  </div>
+
+  <div id="contenido">
+    <div class="wrap">
+      <a class="volver" href="recibos.html">&larr; Volver a Recibos</a>
+      <h1>Registro de Recibos</h1>
+      <p class="sub">Consulta y exporta todos los recibos generados</p>
+
+      <div id="no-api-msg" class="no-api" style="display:none;">
+        ⚠️ Este registro aún no está conectado a la nube. Falta publicar el Apps Script del backend y pegar su URL en <code>recibos.html</code> y en este archivo.
+      </div>
+
+      <div class="toolbar">
+        <input type="text" id="buscador" placeholder="Buscar por número, empresa o concepto..." oninput="renderTabla()">
+        <button class="btn secondary" onclick="cargarRecibos()">&#8635; Actualizar</button>
+        <button class="btn" id="btn-excel" onclick="descargarExcel()">Descargar Excel</button>
+      </div>
+
+      <div class="count-badge" id="count-badge"></div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>N°</th>
+              <th>Fecha</th>
+              <th>Recibí de</th>
+              <th>Dirección</th>
+              <th>Concepto</th>
+              <th>Total</th>
+              <th>Firma</th>
+              <th>Registrado</th>
+            </tr>
+          </thead>
+          <tbody id="tabla-body"></tbody>
+        </table>
+      </div>
+
+      <footer>Sistema de control de pases de salida &mdash; Registro de Recibos</footer>
+    </div>
+  </div>
+
+<script>
+  // Mismo código de acceso que solo Everth conoce. Cámbialo aquí si lo necesitas.
+  const CODIGO_ACCESO = 'RECIBOS-EL2026';
+
+  function verificarCodigo() {
+    const val = document.getElementById('gate-code').value.trim();
+    if (val === CODIGO_ACCESO) {
+      sessionStorage.setItem('registro_recibos_ok', '1');
+      document.getElementById('gate').style.display = 'none';
+      document.getElementById('contenido').style.display = 'block';
+      cargarRecibos();
+    } else {
+      document.getElementById('gate-err').textContent = 'Código incorrecto.';
+    }
+  }
+  document.getElementById('gate-code').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') verificarCodigo();
+  });
+  if (sessionStorage.getItem('registro_recibos_ok') === '1') {
+    document.getElementById('gate').style.display = 'none';
+    document.getElementById('contenido').style.display = 'block';
+  }
+
+  // ── API CLOUD (recibos) — completar con la misma URL del Apps Script usada en recibos.html
+  const API_URL = '';
+
+  let recibosActuales = [];
+
+  async function cargarRecibos() {
+    const tbody = document.getElementById('tabla-body');
+    if (!API_URL) {
+      document.getElementById('no-api-msg').style.display = 'block';
+      tbody.innerHTML = '<tr><td colspan="8" class="empty-msg">Sin conexión a la nube todavía.</td></tr>';
+      document.getElementById('count-badge').textContent = '';
+      return;
+    }
+    tbody.innerHTML = '<tr><td colspan="8" class="loading-msg">Cargando…</td></tr>';
+    try {
+      const res = await fetch(`${API_URL}?action=listarRecibos`);
+      const data = await res.json();
+      recibosActuales = (data && data.recibos) || [];
+      recibosActuales.sort((a, b) => String(b.Timestamp || '').localeCompare(String(a.Timestamp || '')));
+      renderTabla();
+    } catch (e) {
+      tbody.innerHTML = '<tr><td colspan="8" class="empty-msg">⚠️ No se pudo conectar con el registro.</td></tr>';
+      document.getElementById('count-badge').textContent = '';
+    }
+  }
+
+  function filasFiltradas() {
+    const q = document.getElementById('buscador').value.trim().toLowerCase();
+    if (!q) return recibosActuales;
+    return recibosActuales.filter(r =>
+      String(r.Numero || '').toLowerCase().includes(q) ||
+      String(r.RecibiDe || '').toLowerCase().includes(q) ||
+      String(r.Concepto || '').toLowerCase().includes(q)
+    );
+  }
+
+  function renderTabla() {
+    const tbody = document.getElementById('tabla-body');
+    const filas = filasFiltradas();
+    document.getElementById('count-badge').textContent = `${filas.length} recibo${filas.length === 1 ? '' : 's'}`;
+    if (filas.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" class="empty-msg">No hay recibos registrados.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = filas.map(r => `
+      <tr>
+        <td>${r.Numero || ''}</td>
+        <td>${r.Fecha || ''}</td>
+        <td>${r.RecibiDe || ''}</td>
+        <td>${r.Direccion || ''}</td>
+        <td>${r.Concepto || ''}</td>
+        <td>Q${Number(r.Total || 0).toFixed(2)}</td>
+        <td>${(r.FirmaNombre || '') + (r.FirmaCargo ? ' — ' + r.FirmaCargo : '')}</td>
+        <td>${r.Timestamp || ''}</td>
+      </tr>
+    `).join('');
+  }
+
+  function descargarExcel() {
+    const filas = filasFiltradas();
+    if (filas.length === 0) { alert('No hay datos para exportar.'); return; }
+    const rows = filas.map(r => ({
+      'N°': r.Numero || '',
+      'Fecha': r.Fecha || '',
+      'Recibí de': r.RecibiDe || '',
+      'Dirección': r.Direccion || '',
+      'Concepto': r.Concepto || '',
+      'Total': Number(r.Total || 0),
+      'Firma - Nombre': r.FirmaNombre || '',
+      'Firma - Cargo': r.FirmaCargo || '',
+      'Registrado': r.Timestamp || ''
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Recibos');
+    XLSX.writeFile(wb, `Registro_Recibos_${new Date().toISOString().slice(0,10)}.xlsx`);
+  }
+
+  if (sessionStorage.getItem('registro_recibos_ok') === '1') cargarRecibos();
+</script>
+</body>
+</html>

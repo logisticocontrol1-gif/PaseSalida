@@ -33,6 +33,9 @@
   .field textarea { resize: vertical; min-height: 44px; font-family: inherit; }
   .field .hint { font-size: 11px; color: #888; margin-top: 4px; font-weight: 400; text-transform: none; letter-spacing: 0; }
 
+  .fixed-info { background: #F7F8FC; border: 1.5px solid #DDE0EC; border-radius: 8px; padding: 10px 14px; font-size: 13px; color: #333; }
+  .fixed-info b { color: #002060; }
+
   .row2 { display: flex; gap: 12px; }
   .row2 .field { flex: 1; }
 
@@ -49,10 +52,6 @@
   .total-line .lbl { font-weight: 800; background: #F7C9B4; padding: 6px 14px; border-radius: 4px; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px; }
   .total-line .val { font-weight: 800; font-size: 16px; }
 
-  .checks { display: flex; gap: 18px; flex-wrap: wrap; padding: 4px 0 14px; }
-  .check-item { display: flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 600; color: #111; }
-  .check-item input[type="checkbox"] { width: 18px; height: 18px; accent-color: #002060; cursor: pointer; }
-
   .actions { display: flex; gap: 12px; margin: 20px 20px 4px; padding-top: 14px; border-top: 1.5px solid #DDDDDD; }
   .btn { flex: 1; padding: 12px 10px; border: 1.5px solid #002060; border-radius: 7px; font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: background 0.15s; }
   .btn-limpiar { background: #FFFFFF; color: #002060; }
@@ -60,9 +59,12 @@
   .btn-pdf { background: #002060; color: #FFFFFF; }
   .btn-pdf:hover { background: #003080; }
 
-  .volver { display: block; text-align: center; padding: 14px 20px 20px; font-size: 12px; }
+  .volver { display: block; text-align: center; padding: 14px 20px 4px; font-size: 12px; }
   .volver a { color: #002060; text-decoration: none; font-weight: 600; }
   .volver a:hover { text-decoration: underline; }
+  .reg-link { display: block; text-align: center; padding: 4px 20px 20px; font-size: 11px; }
+  .reg-link a { color: #888; text-decoration: none; }
+  .reg-link a:hover { text-decoration: underline; color: #555; }
 
   .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: #111; color: #FFF; padding: 11px 22px; border-radius: 30px; font-size: 13px; font-weight: 600; box-shadow: 0 4px 16px rgba(0,0,0,0.25); transition: transform 0.3s ease; z-index: 999; white-space: nowrap; }
   .toast.show { transform: translateX(-50%) translateY(0); }
@@ -94,7 +96,7 @@
     <span class="sep">|</span>
     <div class="meta-field">
       <label>N°:</label>
-      <input type="text" id="numero" placeholder="72" style="min-width:60px;">
+      <input type="text" id="numero" placeholder="103" style="min-width:60px;">
     </div>
   </div>
 
@@ -103,7 +105,13 @@
     <!-- RECIBI DE -->
     <div class="section-bar">Recibí de</div>
     <div class="fields">
-      <div class="field"><label>Empresa / Persona</label><input type="text" id="recibi-de" placeholder="Ej. Caribe Gru, S.A."></div>
+      <div class="field">
+        <label>Empresa</label>
+        <select id="recibi-de-select">
+          <option value="Caribe Gru, S.A." selected>Caribe Gru, S.A.</option>
+          <option value="Manabique">Manabique</option>
+        </select>
+      </div>
       <div class="field"><label>Dirección</label><input type="text" id="direccion" value="CIUDAD"></div>
     </div>
 
@@ -133,19 +141,9 @@
     <!-- FIRMA -->
     <div class="section-bar">Firma</div>
     <div class="fields">
-      <div class="row2">
-        <div class="field">
-          <label>Nombre de quien firma</label>
-          <select id="firma-nombre-select" onchange="onFirmaNombreChange()">
-            <option value="">— Seleccionar nombre —</option>
-          </select>
-        </div>
+      <div class="fixed-info">
+        <b>David Alonzo</b> — Supervisor de Control Logístico
       </div>
-      <div class="field" id="firma-nombre-otro-field" style="display:none;">
-        <label>Nombre (especificar)</label>
-        <input type="text" id="firma-nombre-otro" placeholder="Nombre completo">
-      </div>
-      <div class="field"><label>Cargo</label><input type="text" id="firma-cargo" placeholder="Ej. Supervisor de Control Logístico"></div>
     </div>
 
     <!-- ACCIONES -->
@@ -155,39 +153,38 @@
     </div>
 
     <div class="volver"><a href="index.html">← Volver al inicio</a></div>
+    <div class="reg-link"><a href="registro-recibos.html">Ver registro de recibos</a></div>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-  // ── PERSONAL UNIFICADO DE CONTROL LOGÍSTICO (mismo listado usado en ALOPSA/PAHAME/ESTRAHU/Envío Interno)
-  const DESPACHA_NOMBRES = {
-    ACL: ['Misael Gómez','Lester Pérez','Marlin Ramírez','Anderson Castañeda','Lourdes Borja','Manuel Arias','Christofer García','Jhoel Guzmán','Gustavo Duarte'],
-    ASR: ['Leidi Chun','Keita Ruano'],
-    AST: ['Everth Leal','Lcda. Roxana Villeda'],
-  };
-  const TODOS_LOS_NOMBRES = [].concat(DESPACHA_NOMBRES.ACL, DESPACHA_NOMBRES.ASR, DESPACHA_NOMBRES.AST);
+  // ── FIRMA FIJA (siempre la misma persona)
+  const FIRMA_NOMBRE = 'David Alonzo';
+  const FIRMA_CARGO = 'Supervisor de Control Logístico';
 
-  function poblarSelectNombres() {
-    const sel = document.getElementById('firma-nombre-select');
-    TODOS_LOS_NOMBRES.forEach(n => {
-      const opt = document.createElement('option');
-      opt.value = n; opt.textContent = n;
-      sel.appendChild(opt);
-    });
-    const optOtro = document.createElement('option');
-    optOtro.value = 'OTRO'; optOtro.textContent = 'Otro (especificar)';
-    sel.appendChild(optOtro);
+  // ── API CLOUD (recibos) — completar con la URL del Apps Script publicado
+  const API_URL = '';
+
+  async function apiGet(params) {
+    if (!API_URL) return null;
+    try {
+      const qs = new URLSearchParams(params).toString();
+      const res = await fetch(`${API_URL}?${qs}`);
+      return await res.json();
+    } catch (e) { return null; }
   }
-  function onFirmaNombreChange() {
-    const val = document.getElementById('firma-nombre-select').value;
-    document.getElementById('firma-nombre-otro-field').style.display = (val === 'OTRO') ? 'block' : 'none';
-  }
-  function firmaNombreVal() {
-    const sel = document.getElementById('firma-nombre-select').value;
-    if (sel === 'OTRO') return document.getElementById('firma-nombre-otro').value.trim();
-    return sel;
+  async function apiPost(data) {
+    if (!API_URL) return null;
+    try {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(data)
+      });
+      return await res.json();
+    } catch (e) { return null; }
   }
 
   // ── FECHA AUTOMÁTICA (dd/mm/aaaa, igual al formato original del recibo)
@@ -198,12 +195,17 @@
   }
   document.getElementById('fecha').value = fechaHoyStr();
 
-  // ── CORRELATIVO LOCAL (el registro maestro sigue siendo el Excel "Registro"; esto solo sugiere el siguiente número)
+  // ── CORRELATIVO: intenta cloud (siguienteNumero); si no hay API o falla, usa respaldo local desde 103
   const CORRELATIVO_KEY = 'recibosUltimoNumero';
-  function cargarCorrelativo() {
+  async function cargarCorrelativo() {
+    const campo = document.getElementById('numero');
+    const cloud = await apiGet({ action: 'siguienteNumero' });
+    if (cloud && cloud.numero) {
+      campo.value = cloud.numero;
+      return;
+    }
     const guardado = parseInt(localStorage.getItem(CORRELATIVO_KEY), 10);
-    const siguiente = (!isNaN(guardado) && guardado > 0) ? guardado + 1 : 72;
-    document.getElementById('numero').value = siguiente;
+    campo.value = (!isNaN(guardado) && guardado > 0) ? guardado + 1 : 103;
   }
   cargarCorrelativo();
 
@@ -251,13 +253,9 @@
   // ── LIMPIAR
   function limpiarForm() {
     if (!confirm('¿Limpiar todo el formulario?')) return;
-    document.getElementById('recibi-de').value = '';
+    document.getElementById('recibi-de-select').value = 'Caribe Gru, S.A.';
     document.getElementById('direccion').value = 'CIUDAD';
     document.getElementById('concepto').value = '';
-    document.getElementById('firma-nombre-select').value = '';
-    document.getElementById('firma-nombre-otro').value = '';
-    document.getElementById('firma-nombre-otro-field').style.display = 'none';
-    document.getElementById('firma-cargo').value = '';
     inicializarFilas(8);
     calcularTotal();
     document.getElementById('fecha').value = fechaHoyStr();
@@ -276,13 +274,13 @@
     return {
       numero: document.getElementById('numero').value.trim(),
       fecha: document.getElementById('fecha').value.trim(),
-      recibiDe: document.getElementById('recibi-de').value.trim(),
+      recibiDe: document.getElementById('recibi-de-select').value,
       direccion: document.getElementById('direccion').value.trim(),
       filas: filas,
       total: calcularTotal(),
       concepto: document.getElementById('concepto').value.trim(),
-      firmaNombre: firmaNombreVal(),
-      firmaCargo: document.getElementById('firma-cargo').value.trim()
+      firmaNombre: FIRMA_NOMBRE,
+      firmaCargo: FIRMA_CARGO
     };
   }
 
@@ -292,17 +290,20 @@
     if (!numero) { mostrarToast('⚠️ Ingresa el número de recibo'); document.getElementById('numero').focus(); return; }
 
     const d = recogerDatos();
-    if (!d.recibiDe) { mostrarToast('⚠️ Ingresa de quién se recibió el pago'); document.getElementById('recibi-de').focus(); return; }
     if (d.filas.length === 0) { mostrarToast('⚠️ Agrega al menos un renglón al detalle'); return; }
-    if (!d.firmaNombre) { mostrarToast('⚠️ Selecciona o escribe el nombre de quien firma'); return; }
 
     dibujarPDF(d);
 
-    // Guarda el correlativo usado para sugerir el siguiente la próxima vez
+    // Guarda en la nube (registro privado) y respaldo local del correlativo
+    apiPost(Object.assign({ action: 'guardarRecibo' }, d)).then(res => {
+      if (res && res.ok) {
+        mostrarToast('✅ PDF generado y guardado en el registro');
+      } else {
+        mostrarToast('✅ PDF generado — ⚠️ no se pudo guardar en el registro (revisa conexión)');
+      }
+    });
     const n = parseInt(numero, 10);
     if (!isNaN(n)) localStorage.setItem(CORRELATIVO_KEY, n);
-
-    mostrarToast('✅ PDF generado — recuerda anotar este recibo en la hoja "Registro"');
   }
 
   function dibujarPDF(d) {
@@ -400,7 +401,6 @@
     doc.save(`Recibo ${d.numero || ''} - ${d.recibiDe || 'Recibo'}.pdf`);
   }
 
-  poblarSelectNombres();
   calcularTotal();
 </script>
 </body>
