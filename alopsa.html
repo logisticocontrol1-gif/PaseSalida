@@ -200,8 +200,12 @@
 
   async function apiGet(params) {
     const qs = new URLSearchParams(params).toString();
-    const res = await fetch(`${API_URL}?${qs}`);
-    return res.json();
+    const ctrl = new AbortController();
+    const tmo = setTimeout(() => ctrl.abort(), 10000);
+    try {
+      const res = await fetch(`${API_URL}?${qs}`, { signal: ctrl.signal });
+      return await res.json();
+    } finally { clearTimeout(tmo); }
   }
 
   async function apiPost(data) {
@@ -231,13 +235,13 @@
       campo.placeholder = 'T-001';
       return;
     }
-    campo.readOnly = true;
+    campo.readOnly = false;
     campo.value = '';
     campo.placeholder = 'Generando número…';
     try {
       const data = await apiGet({ action: 'siguienteNumero', bodega: area });
       if (data && data.numero) {
-        campo.value = data.numero;
+        if (!campo.value) campo.value = data.numero;
         campo.placeholder = area + '-001';
         campo.readOnly = false;
       } else {
