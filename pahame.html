@@ -66,6 +66,7 @@
 </style>
 </head>
 <body><div class="lonas-link"><a href="lonas-pahame.html">📋 Solicitud de Lonas →</a></div>
+<div class="lonas-link"><a href="nylon-pahame.html">🧵 Pase de Nylon (PHN) →</a></div>
 <div class="card">
 
   <!-- HEADER -->
@@ -183,8 +184,12 @@
   const API_URL = 'https://script.google.com/macros/s/AKfycbzKklWfuBXRkqgVwxL8nNgWm3m8lTN1ZLeOhqK4RgT41stMeqhv9ZLNSe_nlB_dzS6D9w/exec';
   async function apiGet(params) {
     const qs = new URLSearchParams(params).toString();
-    const res = await fetch(`${API_URL}?${qs}`);
-    return res.json();
+    const ctrl = new AbortController();
+    const tmo = setTimeout(() => ctrl.abort(), 10000);
+    try {
+      const res = await fetch(`${API_URL}?${qs}`, { signal: ctrl.signal });
+      return await res.json();
+    } finally { clearTimeout(tmo); }
   }
   async function apiPost(data) {
     const res = await fetch(API_URL, {
@@ -212,11 +217,12 @@
       campo.readOnly = false;
       return;
     }
-    campo.readOnly = true;
-    campo.value = 'Generando…';
+    campo.readOnly = false;
+    campo.value = '';
+    campo.placeholder = 'Generando…';
     apiGet({ action: 'siguienteNumero', bodega: area }).then(data => {
       if (data && data.numero) {
-        campo.value = data.numero;
+        if (!campo.value) campo.value = data.numero;
         campo.readOnly = false;
       } else {
         campo.readOnly = false;
