@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pase de salida – Nylon</title>
+<style>
+:root{--bg:#eef0f3;--card:#fff;--ink:#1c1f24;--mut:#5d6470;--line:#d3d7de;--acc:#1d4ed8;--ok:#15803d;--bad:#b91c1c;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14161a;--card:#1f2228;--ink:#e8eaee;--mut:#9aa1ad;--line:#343944;--acc:#7aa2ff;--ok:#4ade80;--bad:#f87171;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#14161a;--card:#1f2228;--ink:#e8eaee;--mut:#9aa1ad;--line:#343944;--acc:#7aa2ff;--ok:#4ade80;--bad:#f87171;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Arial,sans-serif;padding:12px}
+.wrap{max-width:860px;margin:0 auto;display:grid;gap:12px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px}
+.stock{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+.stock .big{font-size:34px;font-weight:700;line-height:1}
+.stock small{color:var(--mut);display:block}
+.after{font-weight:600}.after.bad{color:var(--bad)}.after.ok{color:var(--ok)}
+button{font:inherit;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:9px 14px;border-radius:8px;cursor:pointer}
+button.pri{background:var(--acc);border-color:var(--acc);color:#fff}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) button.pri{color:#0b1220}}
+.row-btns{display:flex;flex-wrap:wrap;gap:8px}
+.paper{background:#fff;color:#111;border:1px solid var(--line);border-radius:6px;padding:28px 26px;overflow-x:auto}
+.top{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap}
+.logo{font-size:44px;font-weight:300;letter-spacing:2px;color:#666;line-height:1}
+.logo small{display:block;font-size:11px;letter-spacing:3px;color:#888;text-align:center;margin-top:2px}
+.right{text-align:right;font-weight:700;font-size:14px}
+.right input{font:inherit;font-weight:700;text-align:right;border:1px dashed #bbb;background:#fff;color:#111;padding:2px 4px;border-radius:4px;max-width:100%}
+.meta{margin:30px 0 18px;font-weight:700;font-size:14px;line-height:1.5}
+.meta .no{font-size:16px}
+p.t{font-weight:700;font-size:14px;margin:18px 0}
+table{border-collapse:collapse;width:100%;min-width:480px;margin:10px 0 6px}
+th,td{border:1px solid #222;padding:6px;vertical-align:top}
+th{font-size:14px}
+td input,td textarea{width:100%;border:1px dashed #bbb;background:#fff;color:#111;font:inherit;font-weight:700;text-align:center;padding:6px;border-radius:4px;resize:none}
+td.c1{width:18%}td.c2{width:44%}td.c3{width:38%}
+td.x{border:none;width:34px;padding:0 0 0 6px}
+td.x button{padding:2px 8px}
+.sign{display:flex;justify-content:space-between;gap:56px;margin-top:130px;font-size:13px;font-weight:700;flex-wrap:wrap}
+.sign div{flex:1;min-width:170px;border-top:1px solid #222;text-align:center;padding-top:4px}
+.print-only{display:none}
+#corr{font:inherit;font-weight:700;font-size:16px;border:1px dashed #bbb;background:#fff;color:#111;padding:2px 6px;border-radius:4px;width:120px}
+.volver{display:inline-block;font-size:13px;color:var(--mut);text-decoration:none;border:1px solid var(--line);border-radius:8px;padding:6px 12px;background:var(--card)}
+.msg{font-size:13px;color:var(--mut)}
+.stk{margin-top:18px;font-size:13px;font-weight:700}
+.stk table{min-width:0;margin:6px 0 0}
+.stk th{font-size:11px;font-weight:700;width:33.3%}
+.stk td{text-align:center;font-size:16px;font-weight:700}
+.prod{display:block;font:inherit;font-weight:700;font-size:16px;color:var(--ink);background:transparent;border:1px dashed var(--line);border-radius:6px;padding:3px 6px;margin-bottom:6px;width:220px;max-width:100%}
+table.h{width:100%;min-width:0;font-size:13px}
+table.h th,table.h td{border:none;border-bottom:1px solid var(--line);padding:5px;text-align:left;font-weight:400}
+table.h th{font-weight:600;color:var(--mut)}
+@media print{
+ #corr{border:none;padding:0}
+ body{background:#fff;padding:0}.panel,.noprint{display:none!important}
+ .wrap{max-width:none}.paper{border:none;padding:0;overflow:visible}
+ .print-only{display:inline}.screen-only{display:none!important}
+ td input,td textarea,.right input{border:none}
+}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+<div class="wrap">
+<div class="noprint"><a class="volver" href="pahame.html">&larr; Volver a Pase de Salida PAHAME</a> <span class="msg" id="cloudMsg"></span></div>
+
+<div class="panel stock noprint">
+  <div>
+    <small>Stock en bodega de</small><input id="prod" class="prod" maxlength="40" aria-label="Producto">
+    <span class="big" id="stock">…</span>
+  </div>
+  <div>
+    <small>Esta salida: <b id="qtyTot">0</b></small>
+    <span class="after ok" id="after">Cargando…</span>
+  </div>
+  <div class="row-btns">
+    <button id="adj">Ajustar stock</button>
+  </div>
+</div>
+
+<div class="paper" id="paper">
+  <div class="top">
+    <div class="logo">PAHAME<small>Comercializadora</small></div>
+    <div class="right">
+      <input id="lugar" value="SANTO TOMAS DE CASTILLA" size="26"><br>
+      <input type="date" id="fecha" class="screen-only">
+      <span id="fechaTxt" class="print-only"></span>
+    </div>
+  </div>
+
+  <div class="meta">
+    <div class="no">PASE DE SALIDA: <input id="corr" value="PHN-001" maxlength="12" aria-label="Correlativo"></div>
+    <div>A BODEGA No.1</div>
+    <div>PAHAME S.A.</div>
+  </div>
+
+  <p class="t">Por este medio se SOLICITA la entrega de los bienes descritos a continuación:</p>
+
+  <table>
+    <thead><tr><th>CANT.</th><th>PRODUCTO</th><th>CLIENTE</th></tr></thead>
+    <tbody id="rows"></tbody>
+  </table>
+  <div class="noprint"><button id="addRow">+ Agregar línea</button></div>
+
+  <div class="stk">STOCK EN BODEGA – <span id="sP">NYLON NEGRO</span>
+    <table><thead><tr><th>STOCK ANTERIOR</th><th>SALIDA</th><th>STOCK RESTANTE</th></tr></thead>
+    <tbody><tr><td id="sA">…</td><td id="sB">0</td><td id="sC">…</td></tr></tbody></table></div>
+
+  <p class="t" style="margin-top:26px">Agradecido se sirva darle trámite al presente.</p>
+
+  <div class="sign">
+    <div>Técnico</div>
+    <div>Gerente Terminal</div>
+    <div>Encargado de bodega</div>
+  </div>
+</div>
+
+<div class="panel noprint">
+  <div class="row-btns">
+    <button class="pri" id="dl">Descargar PDF</button>
+    <button class="pri" id="reg">Registrar salida</button>
+    <button id="print">Imprimir</button>
+  </div>
+  <p style="color:var(--mut);font-size:13px;margin:10px 0 0">Descarga el PDF primero: sale con el número actual. Después pulsa Registrar para restar del stock y pasar al siguiente correlativo. El stock, el correlativo y el historial se guardan en la nube y son los mismos para todos.</p>
+</div>
+
+<div class="panel noprint">
+  <b>Últimas salidas</b>
+  <div style="overflow-x:auto"><table class="h"><thead><tr><th>No.</th><th>Fecha</th><th>Cant.</th><th>Cliente</th><th>Stock</th></tr></thead><tbody id="hist"></tbody></table></div>
+</div>
+
+</div>
+<script>
+(function(){
+var API_URL="https://script.google.com/macros/s/AKfycbzKklWfuBXRkqgVwxL8nNgWm3m8lTN1ZLeOhqK4RgT41stMeqhv9ZLNSe_nlB_dzS6D9w/exec";
+var S={stock:0,next:1,log:[],prod:"NYLON NEGRO",ready:false};
+function api(path,body){
+  var ctrl=new AbortController(),t=setTimeout(function(){ctrl.abort()},12000);
+  var opt=body?{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(body),signal:ctrl.signal}:{signal:ctrl.signal};
+  return fetch(API_URL+(body?"":path),opt).then(function(r){return r.json()}).finally(function(){clearTimeout(t)});
+}
+function save(){}
+var $=function(i){return document.getElementById(i)};
+var MES=["ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO","JULIO","AGOSTO","SEPTIEMBRE","OCTUBRE","NOVIEMBRE","DICIEMBRE"];
+function pad(n){return "PHN-"+String(n).padStart(3,"0")}
+function corrVal(){return ($("corr").value||"").trim()||pad(S.next)}
+function msg(t){$("cloudMsg").textContent=t||""}
+function today(){var d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function fmt(v){if(!v)return"";var a=v.split("-");return a[2]+" DE "+MES[+a[1]-1]+" DEL "+a[0]}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+
+function addRow(q,d,c){
+  var tr=document.createElement("tr");
+  tr.innerHTML='<td class="c1"><input type="number" min="0" step="1" inputmode="numeric" class="q" value="'+(q||"")+'"></td>'+
+  '<td class="c2"><textarea rows="2" class="d">'+esc(d||S.prod)+'</textarea></td>'+
+  '<td class="c3"><textarea rows="2" class="c">'+esc(c||"")+'</textarea></td>'+
+  '<td class="x noprint"><button title="Quitar">×</button></td>';
+  tr.querySelector("button").onclick=function(){if($("rows").children.length>1){tr.remove();calc();}};
+  tr.querySelector(".q").oninput=calc;
+  $("rows").appendChild(tr);
+}
+function total(){var t=0;document.querySelectorAll(".q").forEach(function(i){t+=Math.max(0,parseInt(i.value,10)||0)});return t}
+function calc(){
+  var t=total(),r=S.stock-t;
+  $("stock").textContent=S.stock;$("qtyTot").textContent=t;
+  $("sA").textContent=S.stock;$("sB").textContent=t;$("sC").textContent=r;$("sP").textContent=S.prod;
+  var a=$("after");
+  if(r<0){a.className="after bad";a.textContent="Excede el stock por "+(-r)}
+  else{a.className="after ok";a.textContent="Quedarían "+r}
+}
+function render(setCorr){
+  if(setCorr)$("corr").value=pad(S.next);
+  $("prod").value=S.prod;
+  var h=$("hist");h.innerHTML="";
+  S.log.forEach(function(l){
+    var tr=document.createElement("tr");
+    tr.innerHTML="<td>"+esc(l.n)+"</td><td>"+esc(l.f)+"</td><td>"+esc(l.q)+"</td><td>"+esc(l.c||"—")+"</td><td>"+esc(l.s)+"</td>";
+    h.appendChild(tr);
+  });
+  calc();
+}
+function cargar(setCorr){
+  msg("Conectando con la nube…");
+  return Promise.all([api("?action=nylonEstado"),api("?action=siguienteNumero&bodega=PHN")]).then(function(r){
+    var e=r[0],n=r[1];
+    if(!e||typeof e.stock!=="number")throw new Error("estado");
+    S.stock=e.stock;S.prod=e.producto||S.prod;S.ready=true;
+    S.log=(e.salidas||[]).map(function(x){var cl="";try{var it=JSON.parse(x.cliente||"[]");cl=it.map(function(i){return i.cliente}).filter(Boolean).join(" / ")}catch(_){cl=String(x.cliente||"")}
+      return{n:x.numero,f:x.fecha,q:x.total,c:cl,s:x.stock}});
+    S.next=(n&&n.secuencia)?n.secuencia:1;
+    msg("");render(setCorr);
+  }).catch(function(){
+    msg("⚠️ Sin conexión con la nube: no se puede registrar la salida. Recarga la página.");
+    render(setCorr);
+  });
+}
+$("fecha").value=today();
+$("fechaTxt").textContent=fmt($("fecha").value);
+$("fecha").onchange=function(){$("fechaTxt").textContent=fmt(this.value)};
+addRow();render(true);cargar(true);
+
+function buildPdf(){
+  var J=window.jspdf.jsPDF,doc=new J({unit:"pt",format:"letter"});
+  var L=56,R=556,i,x,y;
+  doc.setFont("helvetica","normal");doc.setTextColor(100);doc.setFontSize(32);doc.text("PAHAME",L,84);
+  doc.setFontSize(8);doc.text("COMERCIALIZADORA",L+65,98,{align:"center"});
+  doc.setTextColor(20);doc.setFont("helvetica","bold");doc.setFontSize(11);
+  doc.text($("lugar").value.toUpperCase(),R,70,{align:"right"});
+  doc.text(fmt($("fecha").value),R,86,{align:"right"});
+  doc.setFontSize(12);doc.text("PASE DE SALIDA: "+corrVal(),L,150);
+  doc.setFontSize(11);doc.text("A BODEGA No.1",L,168);doc.text("PAHAME S.A.",L,184);
+  doc.setFontSize(10.5);doc.text("Por este medio se SOLICITA la entrega de los bienes descritos a continuación:",L,232);
+  var W=[90,230,180],H=["CANT.","PRODUCTO","CLIENTE"];y=256;
+  doc.setFontSize(11);doc.setLineWidth(0.8);doc.setDrawColor(20);
+  x=L;for(i=0;i<3;i++){doc.rect(x,y,W[i],24);doc.text(H[i],x+W[i]/2,y+16,{align:"center"});x+=W[i];}
+  y+=24;
+  document.querySelectorAll("#rows tr").forEach(function(tr){
+    var q=tr.querySelector(".q").value||"";
+    var d=doc.splitTextToSize(tr.querySelector(".d").value.toUpperCase(),W[1]-12);
+    var c=doc.splitTextToSize(tr.querySelector(".c").value.toUpperCase(),W[2]-12);
+    var h=Math.max(46,Math.max(d.length,c.length)*14+16);
+    if(y+h>700){doc.addPage();y=60;}
+    var cells=[[q],d,c];x=L;
+    for(i=0;i<3;i++){doc.rect(x,y,W[i],h);doc.text(cells[i],x+W[i]/2,y+20,{align:"center"});x+=W[i];}
+    y+=h;
+  });
+  if(y>640){doc.addPage();y=60;}
+  var t=total(),sw=500/3,sl=["STOCK ANTERIOR","SALIDA","STOCK RESTANTE"],sv=[S.stock,t,S.stock-t];
+  doc.setFontSize(9);doc.text("STOCK EN BODEGA – "+S.prod,L,y+24);y+=32;
+  for(i=0;i<3;i++){doc.setFontSize(8);doc.rect(L+sw*i,y,sw,36);doc.text(sl[i],L+sw*i+sw/2,y+12,{align:"center"});doc.setFontSize(13);doc.text(String(sv[i]),L+sw*i+sw/2,y+28,{align:"center"});}
+  y+=36;doc.setFontSize(11);
+  doc.text("Agradecido se sirva darle trámite al presente.",L,y+36);
+  var sy=y+36+140;if(sy>730){doc.addPage();sy=160;}
+  var xs=[56,236,416],lb=["Técnico","Gerente Terminal","Encargado de bodega"];
+  doc.setFontSize(10);
+  for(i=0;i<3;i++){doc.line(xs[i],sy,xs[i]+140,sy);doc.text(lb[i],xs[i]+70,sy+14,{align:"center"});}
+  return doc.output("blob");
+}
+$("prod").oninput=function(){
+  var old=S.prod,nv=this.value.toUpperCase();this.value=nv;S.prod=nv;$("sP").textContent=nv;
+  document.querySelectorAll(".d").forEach(function(t){if(t.value===old)t.value=nv});
+  save();
+};
+$("dl").onclick=function(){
+  $("fechaTxt").textContent=fmt($("fecha").value);
+  try{
+    var blob=buildPdf(),a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);a.download="pase-salida-"+corrVal()+".pdf";
+    document.body.appendChild(a);a.click();a.remove();
+    setTimeout(function(){URL.revokeObjectURL(a.href)},4000);
+  }catch(e){window.print();}
+};
+$("addRow").onclick=function(){addRow()};
+$("print").onclick=function(){$("fechaTxt").textContent=fmt($("fecha").value);window.print()};
+$("reg").onclick=function(){
+  var t=total();
+  if(!S.ready){alert("Sin conexión con la nube. Recarga la página.");return}
+  if(t<=0){alert("Escribe una cantidad mayor a 0.");return}
+  if(t>S.stock){alert("La cantidad ("+t+") es mayor al stock disponible ("+S.stock+").");return}
+  var num=corrVal();
+  var items=[];document.querySelectorAll("#rows tr").forEach(function(tr){
+    var q=parseInt(tr.querySelector(".q").value,10)||0;
+    if(q>0)items.push({cant:q,producto:tr.querySelector(".d").value,cliente:tr.querySelector(".c").value.trim()});
+  });
+  var b=$("reg");b.disabled=true;b.textContent="Registrando…";
+  api("",{action:"guardarNylon",numero:num,fecha:fmt($("fecha").value),lugar:$("lugar").value,items:items,total:t,producto:S.prod})
+  .then(function(r){
+    if(r&&r.ok){$("rows").innerHTML="";addRow();return cargar(true)}
+    alert("No se pudo registrar: "+((r&&r.error)||"sin respuesta"));
+  }).catch(function(){alert("No se pudo registrar (sin conexión). Revisa e inténtalo de nuevo.")})
+  .finally(function(){b.disabled=false;b.textContent="Registrar salida"});
+};
+$("adj").onclick=function(){
+  var v=prompt("Nuevo stock de Nylon en bodega:",S.stock);
+  if(v===null)return;var n=parseInt(v,10);
+  if(isNaN(n)||n<0){alert("Número no válido.");return}
+  api("",{action:"ajustarStockNylon",stock:n,producto:S.prod}).then(function(r){
+    if(r&&r.ok)return cargar(false);
+    alert("No se pudo ajustar el stock.");
+  }).catch(function(){alert("No se pudo ajustar el stock (sin conexión).")});
+};
+})();
+</script>
+</body>
+</html>
