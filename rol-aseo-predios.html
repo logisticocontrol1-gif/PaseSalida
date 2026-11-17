@@ -234,7 +234,7 @@
     <div class="chip">Sábados: <b>2 de los 3 llegan</b>&nbsp;(7:00 a.m. – 12:00 p.m.) y 1 descansa — el equipo coordina la rotación entre ellos</div>
     <div class="chip"><b>Misael &amp; Keitha</b>&nbsp;no entran en la rotación de limpieza — siempre de apoyo</div>
     <div class="chip">Turno noche&nbsp;<b>recorre 1 bodega</b>&nbsp;distinta de Predios cada noche</div>
-    <div class="chip">Martes: <b>Marlin Ramírez</b>&nbsp;(MQ/Porta) cubre solo la hora de almuerzo (12–2 pm), no el día completo</div>
+    <div class="chip">Martes: <b class="reemp-marlin">Natalia Conde</b>&nbsp;(en lugar de Marlin) cubre solo la hora de almuerzo (12–2 pm), no el día completo</div>
     <div class="chip"><b>Anderson</b>&nbsp;también apoya en MQ el medio día de los lunes, en lugar de Marlin</div>
     <div class="chip">Apoyo a MQ hoy: <span id="apoyo-mq-texto">—</span></div>
   </div>
@@ -276,7 +276,8 @@
   <div class="legend">
     <div class="chip">Todos manejan un horario habitual de&nbsp;<b>7 am – 5 pm</b>&nbsp;— este calendario solo indica quién cubre el horario extendido hasta las 6 pm cada día</div>
     <div class="chip"><b>Leydi</b>&nbsp;tiene su base en MQ todos los días</div>
-    <div class="chip"><b>Lester, Marlin y Cristhofer</b>&nbsp;rotan la limpieza en Porta, 2 días cada uno</div>
+    <div class="chip"><b>Lester, Cristhofer y <span class="reemp-marlin">Natalia Conde</span></b>&nbsp;rotan la limpieza en Porta, 2 días cada uno</div>
+    <div class="chip">Los días de Marlin los cubren&nbsp;<b>Natalia Conde y Mykelin García</b>, una por semana — esta semana: <b class="reemp-marlin">Natalia Conde</b>; la próxima: <b id="reemp-siguiente">Mykelin García</b></div>
     <div class="chip">El horario de&nbsp;<b>ingreso a MQ</b>&nbsp;varía por día — Lester se traslada de Porta a MQ cuando le toca</div>
     <div class="chip">Quien está&nbsp;<b>hasta las 6 pm</b>&nbsp;cubre el medio día en MQ (Lun–Vie)</div>
     <div class="chip"><b>Misael &amp; Keitha</b>&nbsp;(auxiliares de Predios) cubren Porta los días que Lester está en MQ</div>
@@ -326,7 +327,7 @@
         {persona:'Gustavo Aucar',      horario:'7:00 a.m. – 5:00 p.m.'},
         {persona:'Anderson Castañeda', horario:'7:00 a.m. – 5:00 p.m.'},
         {persona:'Lourdes Borja',      horario:'8:00 a.m. – 6:00 p.m.'}
-      ], limpieza:'Anderson Castañeda', almuerzo:'Marlin Ramírez'},
+      ], limpieza:'Anderson Castañeda', almuerzo:'__REEMP__'},
     {dia:'Miércoles', ingreso:[
         {persona:'Gustavo Aucar',      horario:'8:00 a.m. – 6:00 p.m.'},
         {persona:'Anderson Castañeda', horario:'7:00 a.m. – 5:00 p.m.'},
@@ -368,7 +369,7 @@
       {"persona": "__AUX_DIA__", "horario": "6:00 a.m. – 7:00 a.m. — base en MQ hasta que llegue Leydi"},
       {"persona": "Leydi", "horario": "7:00 a.m. – 5:00 p.m."},
       {"persona": "Lester Pérez", "horario": "8:00 a.m. – 6:00 p.m. (Porta)"}
-    ], "limpiezaPorta": "Marlin Ramírez", "medioDia": "Lester Pérez"},
+    ], "limpiezaPorta": "__REEMP__", "medioDia": "Lester Pérez"},
   {"dia": "Jueves", "ingreso": [
       {"persona": "__AUX_DIA__", "horario": "6:00 a.m. – 7:00 a.m. — base en MQ hasta que llegue Leydi"},
       {"persona": "Leydi", "horario": "7:00 a.m. – 5:00 p.m."},
@@ -377,7 +378,7 @@
   {"dia": "Viernes", "ingreso": [
       {"persona": "__AUX_DIA__", "horario": "6:00 a.m. – 8:00 a.m. — base en MQ hasta que llegue Leydi"},
       {"persona": "Leydi", "horario": "8:00 a.m. – 6:00 p.m."}
-    ], "limpiezaPorta": "Marlin Ramírez", "medioDia": "Leydi"},
+    ], "limpiezaPorta": "__REEMP__", "medioDia": "Leydi"},
   {"dia": "Sábado", "ingreso": [
       {"persona": "__AUX_DIA__", "horario": "6:00 a.m. – 7:00 a.m. — base en MQ hasta que llegue Leydi"},
       {"persona": "Leydi", "horario": "7:00 a.m. – 12:00 p.m."}
@@ -407,6 +408,20 @@
     return r;
   }
   var msPorSemana = 7 * 24 * 60 * 60 * 1000;
+
+  // ---------- Reemplazo de Marlin: Natalia Conde y Mykelin García, 1 cada semana ----------
+  // Cubren los días de Marlin (limpieza de Porta y almuerzo de Transportes del martes).
+  // Ancla: semana que inicia el domingo 8-nov-2026 = Natalia Conde. Cambian cada domingo.
+  var ANCLA_REEMP = new Date(2026, 10, 8);
+  var semReemp = Math.round((domingoDeLaSemana(hoyDate) - ANCLA_REEMP) / msPorSemana);
+  var reempParNatalia = ((semReemp % 2) + 2) % 2 === 0;
+  var reempActual = reempParNatalia ? 'Natalia Conde' : 'Mykelin García';
+  var reempSiguiente = reempParNatalia ? 'Mykelin García' : 'Natalia Conde';
+  TRANSPORTE.forEach(function(r){ if(r.almuerzo === '__REEMP__'){ r.almuerzo = reempActual; } });
+  MQ.forEach(function(r){ if(r.limpiezaPorta === '__REEMP__'){ r.limpiezaPorta = reempActual; } });
+  Array.prototype.forEach.call(document.querySelectorAll('.reemp-marlin'), function(el){ el.textContent = reempActual; });
+  var reempSigEl = document.getElementById('reemp-siguiente');
+  if(reempSigEl){ reempSigEl.textContent = reempSiguiente; }
 
   // ---------- Tabla de Transportes ----------
   var tTbody = document.querySelector('#transporte-tabla tbody');
